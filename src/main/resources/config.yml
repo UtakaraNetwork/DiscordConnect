@@ -25,5 +25,15 @@ dummyServerName: "----"
 # LunaChat使用時にのみ有効 (Only when using the LunaChat plugin)
 japanizeFormat: "*({server})* **{sender}** __JP__: {japanized}"
 
+# N8ChatCasterプラグイン専用機能
+n8chatcaster:
+  adminchat:
+    enable: false
+    webhookURL: null  # eg. https://discord.com/api/webhooks/xxxxx/xxxxx
+    chatChannelID: null  # eg. 000000000000000000
+    formats:
+      toMinecraft: "§6≪§4§lAdmin§6≫§9[Discord] §r{name}§6≫ §r"
+      toDiscord: "Minecraft: ({server}) {displayName}"
+
 # この値は変更しないでください！ (Don't change the value!)
 configVersion: 4

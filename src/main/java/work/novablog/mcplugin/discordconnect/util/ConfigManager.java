@@ -37,6 +37,12 @@ public class ConfigManager {
     public String dummyServerName;
     public String lunaChatJapanizeFormat;
 
+    public boolean n8ccAdminChatEnable;
+    public String n8ccAdminChatWebhookURL;
+    public long n8ccAdminChatChatChannelID;
+    public String n8ccAdminChatFormatToMinecraft;
+    public String n8ccAdminChatFormatToDiscord;
+
     /**
      * configの読み出し、保持を行うインスタンスを生成します
      * @param plugin プラグインのメインクラス
@@ -79,6 +85,15 @@ public class ConfigManager {
         hiddenServers = pluginConfig.getStringList("hiddenServers");
         dummyServerName = pluginConfig.getString("dummyServerName");
         lunaChatJapanizeFormat = pluginConfig.getString("japanizeFormat");
+
+        Configuration n8ccAdminChat = pluginConfig.getSection("n8chatcaster.adminchat");
+        if (n8ccAdminChat != null) {
+            n8ccAdminChatEnable = n8ccAdminChat.getBoolean("enable");
+            n8ccAdminChatWebhookURL = n8ccAdminChat.getString("webhookURL");
+            n8ccAdminChatChatChannelID = n8ccAdminChat.getLong("chatChannelID");
+            n8ccAdminChatFormatToMinecraft = n8ccAdminChat.getString("toMinecraft");
+            n8ccAdminChatFormatToDiscord = n8ccAdminChat.getString("toDiscord");
+        }
     }
 
     private Configuration getConfigData(Plugin plugin) throws IOException {
