@@ -40,6 +40,8 @@ public final class DiscordConnect extends Plugin {
     private UUIDCacheData uuidCacheData;
     private LunaChatListener lunaChatListener;
 
+    private @Nullable DiscordWebhookSender n8ccAdminChatWebhookSender;
+
     /**
      * インスタンスを返します
      * @return インスタンス
@@ -63,6 +65,15 @@ public final class DiscordConnect extends Plugin {
     public @NotNull
     ArrayList<DiscordWebhookSender> getDiscordWebhookSenders() {
         return discordWebhookSenders;
+    }
+
+    /**
+     * N8ChatCaster 管理者チャット用のWebhook送信インスタンスを返します
+     * @return webhook送信インスタンス。設定が無効であるか、初期化されていなければ null が返ります。
+     */
+    @Nullable
+    public DiscordWebhookSender getN8CCAdminChatWebhookSender() {
+        return n8ccAdminChatWebhookSender;
     }
 
     /**
@@ -130,6 +141,7 @@ public final class DiscordConnect extends Plugin {
         if(bungeeListener != null) getProxy().getPluginManager().unregisterListener(bungeeListener);
         if(lunaChatListener != null) getProxy().getPluginManager().unregisterListener(lunaChatListener);
         if(chatCasterListener != null) getProxy().getPluginManager().unregisterListener(chatCasterListener);
+        if(n8ccAdminChatWebhookSender != null) n8ccAdminChatWebhookSender.shutdown();
 
         ConfigManager configManager;
         try {
@@ -167,6 +179,15 @@ public final class DiscordConnect extends Plugin {
             getLogger().severe(ConfigManager.Message.invalidWebhookURL.toString());
         }
 
+        n8ccAdminChatWebhookSender = null;
+        if (configManager.n8ccAdminChatWebhookURL != null && !configManager.n8ccAdminChatWebhookURL.isEmpty()) {
+            try {
+                n8ccAdminChatWebhookSender = new DiscordWebhookSender(configManager.n8ccAdminChatWebhookURL);
+            } catch (IllegalArgumentException e) {
+                getLogger().severe(ConfigManager.Message.invalidWebhookURL.toString());
+            }
+        }
+
         //BungeecordイベントのListenerを登録
         bungeeListener = new BungeeListener(configManager.fromMinecraftToDiscordName, configManager.hiddenServers, configManager.dummyServerName);
         getProxy().getPluginManager().registerListener(this, bungeeListener);
@@ -179,7 +200,7 @@ public final class DiscordConnect extends Plugin {
             getProxy().getPluginManager().registerListener(this, lunaChatListener);
         }
         if(chatCasterAPI != null) {
-            chatCasterListener = new ChatCasterListener(configManager.fromMinecraftToDiscordName);
+            chatCasterListener = new ChatCasterListener(configManager.fromMinecraftToDiscordName,configManager.n8ccAdminChatFormatToDiscord);
             getProxy().getPluginManager().registerListener(this, chatCasterListener);
         }
 
@@ -215,5 +236,6 @@ public final class DiscordConnect extends Plugin {
     public void onDisable() {
         if(botManager != null) botManager.botShutdown(false);
         if(discordWebhookSenders != null) discordWebhookSenders.forEach(DiscordWebhookSender::shutdown);
+        if(n8ccAdminChatWebhookSender != null) n8ccAdminChatWebhookSender.shutdown();
     }
 }
