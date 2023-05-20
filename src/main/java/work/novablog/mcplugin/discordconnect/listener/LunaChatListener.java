@@ -1,12 +1,12 @@
 package work.novablog.mcplugin.discordconnect.listener;
 
 import com.github.ucchyocean.lc3.UUIDCacheData;
-import com.github.ucchyocean.lc3.bungee.event.LunaChatBungeeChannelChatEvent;
-import com.github.ucchyocean.lc3.bungee.event.LunaChatBungeePostJapanizeEvent;
+import com.github.ucchyocean.lc3.bukkit.event.LunaChatBukkitChannelChatEvent;
+import com.github.ucchyocean.lc3.bukkit.event.LunaChatBukkitPostJapanizeEvent;
 import com.gmail.necnionch.myapp.markdownconverter.MarkComponent;
 import com.gmail.necnionch.myapp.markdownconverter.MarkdownConverter;
-import net.md_5.bungee.api.plugin.Listener;
-import net.md_5.bungee.event.EventHandler;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.jetbrains.annotations.NotNull;
 import work.novablog.mcplugin.discordconnect.DiscordConnect;
 import work.novablog.mcplugin.discordconnect.util.ConvertUtil;
@@ -37,7 +37,7 @@ public class LunaChatListener implements Listener {
      * @param event チャット情報
      */
     @EventHandler
-    public void onJapanizeChat(LunaChatBungeePostJapanizeEvent event) {
+    public void onJapanizeChat(LunaChatBukkitPostJapanizeEvent event) {
         if(!event.getChannel().isGlobalChannel()) return;
         ArrayList<DiscordWebhookSender> discordWebhookSenders = DiscordConnect.getInstance().getDiscordWebhookSenders();
 
@@ -69,7 +69,7 @@ public class LunaChatListener implements Listener {
      * @param event チャット情報
      */
     @EventHandler
-    public void onChat(LunaChatBungeeChannelChatEvent event) {
+    public void onChat(LunaChatBukkitChannelChatEvent event) {
         if(!event.getChannel().isGlobalChannel()) return;
         ArrayList<DiscordWebhookSender> discordWebhookSenders = DiscordConnect.getInstance().getDiscordWebhookSenders();
 

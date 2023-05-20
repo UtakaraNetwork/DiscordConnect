@@ -1,8 +1,9 @@
 package work.novablog.mcplugin.discordconnect.command;
 
-import net.md_5.bungee.api.CommandSender;
 
-public interface BungeeCommandAction {
+import org.bukkit.command.CommandSender;
+
+public interface BukkitCommandAction {
     /**
      * 実行する処理
      * @param sender コマンドの送信者

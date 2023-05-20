@@ -1,12 +1,12 @@
 package work.novablog.mcplugin.discordconnect.util;
 
-import net.md_5.bungee.api.plugin.Plugin;
-import net.md_5.bungee.config.Configuration;
-import net.md_5.bungee.config.ConfigurationProvider;
-import net.md_5.bungee.config.YamlConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Locale;
@@ -14,7 +14,7 @@ import java.util.Locale;
 public class ConfigManager {
     private static final int CONFIG_LATEST = 3;
 
-    private static Configuration langData;
+    private static YamlConfiguration langData;
 
     public String botToken;
     public List<String> botWebhookURLs;
@@ -55,7 +55,7 @@ public class ConfigManager {
         }
 
         //configとlangの取得
-        Configuration pluginConfig = getConfigData(plugin);
+        YamlConfiguration pluginConfig = getConfigData(plugin);
         langData = getLangData(plugin);
 
         //configの読み出し
@@ -81,27 +81,27 @@ public class ConfigManager {
         lunaChatJapanizeFormat = pluginConfig.getString("japanizeFormat");
     }
 
-    private Configuration getConfigData(Plugin plugin) throws IOException {
+    private YamlConfiguration getConfigData(Plugin plugin) throws IOException {
         File configFile = new File(plugin.getDataFolder(), "config.yml");
         if (!configFile.exists()) {
             //存在しなければコピー
-            InputStream src = plugin.getResourceAsStream("config.yml");
+            InputStream src = plugin.getResource("config.yml");
             Files.copy(src, configFile.toPath());
         }
 
-        return ConfigurationProvider.getProvider(YamlConfiguration.class).load(configFile);
+        return YamlConfiguration.loadConfiguration(configFile);
     }
 
-    private Configuration getLangData(Plugin plugin) throws IOException {
+    private YamlConfiguration getLangData(Plugin plugin) throws IOException {
         File langFile = new File(plugin.getDataFolder(), "message.yml");
         if (!langFile.exists()) {
             //存在しなければコピー
-            InputStream src = plugin.getResourceAsStream(Locale.getDefault().toString() + ".yml");
-            if(src == null) src = plugin.getResourceAsStream("ja_JP.yml");
+            InputStream src = plugin.getResource(Locale.getDefault().toString() + ".yml");
+            if(src == null) src = plugin.getResource("ja_JP.yml");
             Files.copy(src, langFile.toPath());
         }
 
-        return ConfigurationProvider.getProvider(YamlConfiguration.class).load(langFile);
+        return YamlConfiguration.loadConfiguration(langFile);
     }
 
     private void backupOldFile(Plugin plugin, String targetFileName) throws IOException {

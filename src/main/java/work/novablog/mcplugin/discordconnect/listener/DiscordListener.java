@@ -4,11 +4,11 @@ import com.gmail.necnionch.myapp.markdownconverter.MarkComponent;
 import com.gmail.necnionch.myapp.markdownconverter.MarkdownConverter;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.TextComponent;
+import org.bukkit.Bukkit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import work.novablog.mcplugin.discordconnect.DiscordConnect;
@@ -79,8 +79,8 @@ public class DiscordListener extends ListenerAdapter {
             if(Boolean.TRUE.equals(allowDispatchCommandFromConsoleChannel)) {
                 String commandLine = receivedMessage.getMessage().getContentRaw();
 
-                DiscordConnect.getInstance().getProxy().getPluginManager().dispatchCommand(
-                        DiscordConnect.getInstance().getProxy().getConsole(),
+                DiscordConnect.getInstance().getServer().dispatchCommand(
+                        DiscordConnect.getInstance().getServer().getConsoleSender(),
                         commandLine
                 );
 
@@ -114,17 +114,20 @@ public class DiscordListener extends ListenerAdapter {
                 extra.addAll(convertedMessage);
                 message.setExtra(extra);
 
-                ProxyServer.getInstance().broadcast(message);
+                Bukkit.spigot().broadcast(message);
+                Bukkit.getConsoleSender().spigot().sendMessage(message);
             }
 
             receivedMessage.getMessage().getAttachments().forEach((attachment) -> {
                 TextComponent url = new TextComponent(TextComponent.fromLegacyText(attachment.getUrl()));
                 url.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, attachment.getUrl()));
-                BaseComponent[] message = new ComponentBuilder()
+                BaseComponent[] message = new ComponentBuilder("")
                         .append(formattedForMinecraft)
                         .append(url)
                         .create();
-                ProxyServer.getInstance().broadcast(message);
+
+                Bukkit.spigot().broadcast(message);
+                Bukkit.getConsoleSender().spigot().sendMessage(message);
             });
 
             //Discordに再送

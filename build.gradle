@@ -20,11 +20,15 @@ repositories {
     maven {
         url "https://oss.sonatype.org/content/repositories/snapshots"
     }
+    maven {
+        name = 'spigotmc-repo'
+        url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
+    }
 }
 
 dependencies {
     // implementation 'org.slf4j:slf4j-jdk14:1.7.30'
-    compileOnly 'net.md-5:bungeecord-api:1.18-R0.1-SNAPSHOT'
+    compileOnly 'org.spigotmc:spigot-api:1.13.2-R0.1-SNAPSHOT'
     implementation("net.dv8tion:JDA:5.0.0-alpha.3") {
         exclude module: 'opus-java'
     }
@@ -36,7 +40,6 @@ dependencies {
     implementation 'org.apache.commons:commons-lang3:3.12.0'
     implementation 'me.scarsz:jdaappender:1.0.2'
     implementation files('libs/MarkdownConverter-1.1-SNAPSHOT-min.jar')
-    compileOnly files('libs/N8ChatCaster-dummy.jar')
     compileOnly files('libs/LunaChat.jar')
 }
 
@@ -47,6 +50,7 @@ shadowJar {
 group = 'work.novablog.mcplugin'
 version = '3.1'
 description = 'DiscordConnect'
+archivesBaseName = 'DiscordConnect-spigot'
 java.sourceCompatibility = JavaVersion.VERSION_1_8
 
 tasks.withType(JavaCompile) {

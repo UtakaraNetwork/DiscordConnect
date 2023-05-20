@@ -1,29 +1,28 @@
 package work.novablog.mcplugin.discordconnect.command;
 
-import net.md_5.bungee.api.CommandSender;
-import net.md_5.bungee.api.chat.TextComponent;
-import net.md_5.bungee.api.plugin.Command;
-import net.md_5.bungee.api.plugin.TabExecutor;
 import org.apache.commons.lang3.StringUtils;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import work.novablog.mcplugin.discordconnect.util.ConfigManager;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
-public class BungeeCommandExecutor extends Command implements TabExecutor {
-    private final ArrayList<BungeeSubCommandSettings> subCommands;
+public class BukkitCommandExecutor implements TabExecutor {
+    private final ArrayList<BukkitSubCommandSettings> subCommands;
     private final String permission;
 
     /**
      * Bungeecordコマンドの解析や処理の呼び出しを行うインスタンスを生成します
-     * @param name コマンド名
      * @param permission コマンドを実行するための権限
      *                   {@code null}または空文字の場合すべての人に実行権限を与えます。
-     * @param aliases コマンドに結び付けられるエイリアス
      */
-    public BungeeCommandExecutor(@NotNull String name, @Nullable String permission, @NotNull String... aliases) {
-        super(name, permission, aliases);
+    public BukkitCommandExecutor(String permission) {
         subCommands = new ArrayList<>();
         this.permission = permission;
     }
@@ -31,13 +30,14 @@ public class BungeeCommandExecutor extends Command implements TabExecutor {
     /**
      * サブコマンドを追加します
      * <p>
-     *     サブコマンドは "/(alias) {@link BungeeSubCommandSettings#alias}" コマンドで実行されます。
+     *     サブコマンドは "/(alias) {@link BukkitSubCommandSettings#alias}" コマンドで実行されます。
      * </p>
      * @param subCommand サブコマンドの設定
      */
-    public void addSubCommand(@NotNull BungeeCommandExecutor.BungeeSubCommandSettings subCommand) {
+    public void addSubCommand(@NotNull BukkitCommandExecutor.BukkitSubCommandSettings subCommand) {
         subCommands.add(subCommand);
     }
+
 
     /**
      * コマンド実行時に呼び出されます
@@ -45,32 +45,32 @@ public class BungeeCommandExecutor extends Command implements TabExecutor {
      * @param args 引数
      */
     @Override
-    public void execute(CommandSender commandSender, String[] args) {
+    public boolean onCommand(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         //権限の確認
         if(!commandSender.hasPermission(permission)) {
-            commandSender.sendMessage(new TextComponent(ConfigManager.Message.bungeeCommandDenied.toString()));
-            return;
+            commandSender.sendMessage(ConfigManager.Message.bungeeCommandDenied.toString());
+            return true;
         }
         //引数の確認
         if(args.length == 0) {
             //デフォルトコマンドの実行
             subCommands.stream().filter(subCommand -> subCommand.isDefault).forEach(subCommand -> subCommand.action.execute(commandSender, new String[1]));
-            return;
+            return true;
         }
 
         //サブコマンドを選択
-        Optional<BungeeSubCommandSettings> targetSubCommand = subCommands.stream()
+        Optional<BukkitSubCommandSettings> targetSubCommand = subCommands.stream()
                 .filter(subCommand -> subCommand.alias.equals(args[0])).findFirst();
         if(!targetSubCommand.isPresent()) {
             //エイリアスが一致するサブコマンドがない場合エラー
-            commandSender.sendMessage(new TextComponent(ConfigManager.Message.bungeeCommandNotFound.toString()));
-            return;
+            commandSender.sendMessage(ConfigManager.Message.bungeeCommandNotFound.toString());
+            return true;
         }
 
         //権限の確認
         if (targetSubCommand.get().subPermission != null && !commandSender.hasPermission(targetSubCommand.get().subPermission)) {
-            commandSender.sendMessage(new TextComponent(ConfigManager.Message.bungeeCommandDenied.toString()));
-            return;
+            commandSender.sendMessage(ConfigManager.Message.bungeeCommandDenied.toString());
+            return true;
         }
 
         String[] commandArgs = new String[args.length - 1];
@@ -78,11 +78,12 @@ public class BungeeCommandExecutor extends Command implements TabExecutor {
 
         //引数の確認
         if(commandArgs.length < targetSubCommand.get().requireArgs) {
-            commandSender.sendMessage(new TextComponent(ConfigManager.Message.bungeeCommandSyntaxError.toString()));
-            return;
+            commandSender.sendMessage(ConfigManager.Message.bungeeCommandSyntaxError.toString());
+            return true;
         }
 
         targetSubCommand.get().action.execute(commandSender, commandArgs);
+        return true;
     }
 
     /**
@@ -91,8 +92,9 @@ public class BungeeCommandExecutor extends Command implements TabExecutor {
      * @param args 引数
      * @return 補完リスト
      */
+
     @Override
-    public Iterable<String> onTabComplete(CommandSender commandSender, String[] args) {
+    public List<String> onTabComplete(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String alias, @NotNull String[] args) {
         //引数がなかったら
         if (args.length == 0) {
             return Collections.emptyList();
@@ -108,10 +110,10 @@ public class BungeeCommandExecutor extends Command implements TabExecutor {
         return match;
     }
 
-    public class BungeeSubCommandSettings {
+    public class BukkitSubCommandSettings {
         private final String alias;
         private final String subPermission;
-        private final BungeeCommandAction action;
+        private final BukkitCommandAction action;
         private boolean isDefault;
         private int requireArgs;
 
@@ -120,13 +122,13 @@ public class BungeeCommandExecutor extends Command implements TabExecutor {
          * @param alias サブコマンドのエイリアス
          * @param subPermission コマンドを実行するための権限
          *                      {@code null}または空文字の場合
-         *                      {@link BungeeCommandExecutor#permission}権限を持っている
+         *                      {@link BukkitCommandExecutor#permission}権限を持っている
          *                      すべての人に実行権限を与えます
-         *                      {@link BungeeCommandExecutor#permission}が{@code null}または空文字の場合
+         *                      {@link BukkitCommandExecutor#permission}が{@code null}または空文字の場合
          *                      subPermission引数が何であれすべての人に実行権限を与えます
          * @param action 実行する処理
          */
-        public BungeeSubCommandSettings(@NotNull String alias, @Nullable String subPermission, @NotNull BungeeCommandAction action) {
+        public BukkitSubCommandSettings(@NotNull String alias, @Nullable String subPermission, @NotNull BukkitCommandAction action) {
             this.alias = alias;
             this.subPermission = StringUtils.isEmpty(subPermission) || StringUtils.isEmpty(permission) ? null : permission + "." + subPermission;
             this.action = action;
@@ -141,7 +143,7 @@ public class BungeeCommandExecutor extends Command implements TabExecutor {
          * </p>
          * @param isDefault trueでデフォルトにする
          */
-        public BungeeSubCommandSettings setDefault(boolean isDefault) {
+        public BukkitSubCommandSettings setDefault(boolean isDefault) {
             this.isDefault = isDefault;
             return this;
         }
@@ -153,7 +155,7 @@ public class BungeeCommandExecutor extends Command implements TabExecutor {
          * </p>
          * @param cnt 引数の数
          */
-        public BungeeSubCommandSettings requireArgs(int cnt) {
+        public BukkitSubCommandSettings requireArgs(int cnt) {
             this.requireArgs = cnt;
             return this;
         }

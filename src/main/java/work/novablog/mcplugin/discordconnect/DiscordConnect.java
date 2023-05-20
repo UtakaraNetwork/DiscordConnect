@@ -1,40 +1,36 @@
 package work.novablog.mcplugin.discordconnect;
 
 import com.github.ucchyocean.lc3.LunaChatAPI;
-import com.github.ucchyocean.lc3.LunaChatBungee;
+import com.github.ucchyocean.lc3.LunaChatBukkit;
 import com.github.ucchyocean.lc3.UUIDCacheData;
-import com.gmail.necnionch.myplugin.n8chatcaster.bungee.N8ChatCasterAPI;
-import com.gmail.necnionch.myplugin.n8chatcaster.bungee.N8ChatCasterPlugin;
-import net.md_5.bungee.api.plugin.Plugin;
-import org.bstats.bungeecord.Metrics;
+import org.bukkit.event.HandlerList;
+import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
-import work.novablog.mcplugin.discordconnect.command.BungeeCommand;
+import work.novablog.mcplugin.discordconnect.command.BukkitCommand;
 import work.novablog.mcplugin.discordconnect.command.DiscordCommandExecutor;
 import work.novablog.mcplugin.discordconnect.command.DiscordStandardCommand;
-import work.novablog.mcplugin.discordconnect.listener.BungeeListener;
-import work.novablog.mcplugin.discordconnect.listener.ChatCasterListener;
+import work.novablog.mcplugin.discordconnect.listener.BukkitListener;
 import work.novablog.mcplugin.discordconnect.listener.LunaChatListener;
 import work.novablog.mcplugin.discordconnect.util.ConfigManager;
-import work.novablog.mcplugin.discordconnect.util.discord.BotManager;
 import work.novablog.mcplugin.discordconnect.util.GithubAPI;
+import work.novablog.mcplugin.discordconnect.util.discord.BotManager;
 import work.novablog.mcplugin.discordconnect.util.discord.DiscordWebhookSender;
 
 import javax.annotation.Nullable;
 import javax.security.auth.login.LoginException;
-import java.io.*;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Optional;
 
-public final class DiscordConnect extends Plugin {
+public final class DiscordConnect extends JavaPlugin {
     private static final String pluginDownloadLink = "https://github.com/nova-27/DiscordConnect/releases";
 
     private static DiscordConnect instance;
     private BotManager botManager;
     private ArrayList<DiscordWebhookSender> discordWebhookSenders;
     private DiscordCommandExecutor discordCommandExecutor;
-    private BungeeListener bungeeListener;
-
-    private N8ChatCasterAPI chatCasterAPI;
-    private ChatCasterListener chatCasterListener;
+    private BukkitListener bukkitListener;
 
     private LunaChatAPI lunaChatAPI;
     private UUIDCacheData uuidCacheData;
@@ -66,14 +62,6 @@ public final class DiscordConnect extends Plugin {
     }
 
     /**
-     * ChatCasterAPIを返します
-     * @return chatCasterAPI
-     */
-    public @Nullable N8ChatCasterAPI getChatCasterAPI() {
-        return chatCasterAPI;
-    }
-
-    /**
      * LunaChatAPIを返します
      * @return lunaChatAPI
      */
@@ -94,23 +82,18 @@ public final class DiscordConnect extends Plugin {
         instance = this;
 
         //bstats
-        new Metrics(this, 7990);
-
-        //N8ChatCasterと連携
-        Plugin temp = getProxy().getPluginManager().getPlugin("N8ChatCaster");
-        if (temp instanceof N8ChatCasterPlugin) {
-            chatCasterAPI = (((N8ChatCasterPlugin) temp).getChatCasterApi());
-        }
+//        new Metrics(this, 7990);
 
         //LunaChatと連携
-        temp = getProxy().getPluginManager().getPlugin("LunaChat");
-        if(temp instanceof LunaChatBungee) {
-            uuidCacheData = ((LunaChatBungee) temp).getUUIDCacheData();
-            lunaChatAPI = ((LunaChatBungee) temp).getLunaChatAPI();
+        Plugin temp = getServer().getPluginManager().getPlugin("LunaChat");
+        if(temp instanceof LunaChatBukkit) {
+            uuidCacheData = ((LunaChatBukkit) temp).getUUIDCacheData();
+            lunaChatAPI = ((LunaChatBukkit) temp).getLunaChatAPI();
         }
 
         //コマンドの追加
-        getProxy().getPluginManager().registerCommand(this, new BungeeCommand());
+        Optional.ofNullable(getCommand("discordconnect"))
+                        .ifPresent(cmd -> cmd.setExecutor(new BukkitCommand()));
         discordCommandExecutor = new DiscordCommandExecutor();
         discordCommandExecutor.registerCommand(new DiscordStandardCommand());
 
@@ -127,9 +110,8 @@ public final class DiscordConnect extends Plugin {
     public void init() {
         if(botManager != null) botManager.botShutdown(true);
         if(discordWebhookSenders != null) discordWebhookSenders.forEach(DiscordWebhookSender::shutdown);
-        if(bungeeListener != null) getProxy().getPluginManager().unregisterListener(bungeeListener);
-        if(lunaChatListener != null) getProxy().getPluginManager().unregisterListener(lunaChatListener);
-        if(chatCasterListener != null) getProxy().getPluginManager().unregisterListener(chatCasterListener);
+        if(bukkitListener != null) HandlerList.unregisterAll(bukkitListener);
+        if(lunaChatListener != null) HandlerList.unregisterAll(lunaChatListener);
 
         ConfigManager configManager;
         try {
@@ -168,19 +150,15 @@ public final class DiscordConnect extends Plugin {
         }
 
         //BungeecordイベントのListenerを登録
-        bungeeListener = new BungeeListener(configManager.fromMinecraftToDiscordName, configManager.hiddenServers, configManager.dummyServerName);
-        getProxy().getPluginManager().registerListener(this, bungeeListener);
+        bukkitListener = new BukkitListener(configManager.fromMinecraftToDiscordName);
+        getServer().getPluginManager().registerEvents(bukkitListener, this);
         if(lunaChatAPI != null) {
             lunaChatListener = new LunaChatListener(
                     configManager.fromMinecraftToDiscordName,
                     configManager.lunaChatJapanizeFormat,
                     uuidCacheData
             );
-            getProxy().getPluginManager().registerListener(this, lunaChatListener);
-        }
-        if(chatCasterAPI != null) {
-            chatCasterListener = new ChatCasterListener(configManager.fromMinecraftToDiscordName);
-            getProxy().getPluginManager().registerListener(this, chatCasterListener);
+            getServer().getPluginManager().registerEvents(lunaChatListener, this);
         }
 
         //アップデートのチェック

@@ -42,8 +42,8 @@ userActivity: "ユーザーアクティビティ"
 serverActivity: "サーバーアクティビティ"
 command: "コマンド"
 
-proxyStarted: ":ballot_box_with_check: BungeeCordプロキシが開始しました！"
-proxyStopped: ":no_entry_sign: BungeeCordプロキシが停止しました！"
+proxyStarted: ":ballot_box_with_check: サーバーが起動しました！"
+proxyStopped: ":no_entry_sign: サーバーが停止しました！"
 
 joined: ":tada: {name}がサーバーに参加しました"
 left: ":wave: {name}がサーバーから退出しました"

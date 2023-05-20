@@ -3,8 +3,9 @@ package work.novablog.mcplugin.discordconnect.command;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.md_5.bungee.api.ProxyServer;
-import net.md_5.bungee.api.connection.ProxiedPlayer;
+import org.bukkit.Bukkit;
+import org.bukkit.Server;
+import org.bukkit.entity.Player;
 import work.novablog.mcplugin.discordconnect.DiscordConnect;
 import work.novablog.mcplugin.discordconnect.util.ConfigManager;
 import work.novablog.mcplugin.discordconnect.util.discord.DiscordBotSender;
@@ -62,13 +63,12 @@ public class DiscordStandardCommand implements DiscordCommandListener {
 
     @DiscordCommandAnnotation("players")
     public void playersCmd(Member member, DiscordBotSender channel, String[] args) {
-        ProxyServer proxy = DiscordConnect.getInstance().getProxy();
+        Server server = Bukkit.getServer();
 
         String nickname = member.getNickname() == null ?
                 member.getUser().getName() : member.getNickname();
 
-        String maxPlayers = proxy.getConfig().getPlayerLimit() != -1 ?
-                String.valueOf(proxy.getConfig().getPlayerLimit()) : "∞";
+        String maxPlayers = String.valueOf(server.getMaxPlayers());
 
         EmbedBuilder eb = new EmbedBuilder();
         eb.setAuthor(nickname, null, member.getUser().getAvatarUrl());
@@ -76,19 +76,17 @@ public class DiscordStandardCommand implements DiscordCommandListener {
         eb.setColor(Color.orange);
 
         eb.setDescription(ConfigManager.Message.discordCommandPlayerCount.toString()
-                .replace("{count}", String.valueOf(proxy.getOnlineCount()))
+                .replace("{count}", String.valueOf(server.getOnlinePlayers().size()))
                 .replace("{max}", maxPlayers)
         );
 
-        proxy.getServers().forEach((name, server) -> {
-            StringBuilder player_list_builder = new StringBuilder();
-            for (ProxiedPlayer player : server.getPlayers()) {
-                player_list_builder.append(player.getName()).append("\n");
-            }
-            String player_list = player_list_builder.toString().isEmpty() ?
-                    ConfigManager.Message.discordCommandNoPlayersFound.toString() : player_list_builder.toString();
-            eb.addField(name, player_list, true);
-        });
+        StringBuilder player_list_builder = new StringBuilder();
+        for (Player player : server.getOnlinePlayers()) {
+            player_list_builder.append(player.getName()).append("\n");
+        }
+        String player_list = player_list_builder.toString().isEmpty() ?
+                ConfigManager.Message.discordCommandNoPlayersFound.toString() : player_list_builder.toString();
+        eb.addField("参加中", player_list, true);
 
         channel.addQueue(eb.build());
     }

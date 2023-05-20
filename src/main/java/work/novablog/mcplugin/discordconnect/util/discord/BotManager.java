@@ -185,8 +185,8 @@ public class BotManager implements EventListener {
 
             chatChannelSenders.forEach(Thread::start);
             updateGameName(
-                    DiscordConnect.getInstance().getProxy().getPlayers().size(),
-                    DiscordConnect.getInstance().getProxy().getConfig().getPlayerLimit()
+                    DiscordConnect.getInstance().getServer().getOnlinePlayers().size(),
+                    DiscordConnect.getInstance().getServer().getMaxPlayers()
             );
             DiscordConnect.getInstance().getLogger().info(ConfigManager.Message.botIsReady.toString());
 
