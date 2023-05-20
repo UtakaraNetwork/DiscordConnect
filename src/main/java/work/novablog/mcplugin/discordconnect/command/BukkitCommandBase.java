@@ -1,11 +1,12 @@
 package work.novablog.mcplugin.discordconnect.command;
 
-import net.md_5.bungee.api.CommandSender;
+
+import org.bukkit.command.CommandSender;
 
 /**
  * Minecraftコマンドの原型
  */
-public interface BungeeCommandBase {
+public interface BukkitCommandBase {
     /**
      * 実行する処理
      * @param sender 送信者

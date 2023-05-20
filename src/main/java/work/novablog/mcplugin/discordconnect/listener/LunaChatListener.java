@@ -1,16 +1,15 @@
 package work.novablog.mcplugin.discordconnect.listener;
 
-import com.github.ucchyocean.lc3.LunaChatBungee;
-import com.github.ucchyocean.lc3.bungee.event.LunaChatBungeeChannelChatEvent;
+import com.github.ucchyocean.lc3.LunaChatBukkit;
+import com.github.ucchyocean.lc3.bukkit.event.LunaChatBukkitChannelChatEvent;
 import com.github.ucchyocean.lc3.japanize.JapanizeType;
 import com.gmail.necnionch.myapp.markdownconverter.MarkComponent;
 import com.gmail.necnionch.myapp.markdownconverter.MarkdownConverter;
-import net.md_5.bungee.api.ProxyServer;
-import net.md_5.bungee.api.plugin.Listener;
-import net.md_5.bungee.event.EventHandler;
+import org.bukkit.Bukkit;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import work.novablog.mcplugin.discordconnect.DiscordConnect;
 
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,11 +27,11 @@ public class LunaChatListener implements Listener {
      * @param event LunaChatBungeeChannelChatEvent
      * @return 変換すべきならtrue
      */
-    public boolean shouldJapanize(LunaChatBungeeChannelChatEvent event) {
-        LunaChatBungee lunaChat = DiscordConnect.getInstance().getLunaChat();
+    public boolean shouldJapanize(LunaChatBukkitChannelChatEvent event) {
+        LunaChatBukkit lunaChat = DiscordConnect.getInstance().getLunaChat();
 
         // NoneJPマーカーで始まる
-        String marker = lunaChat.getConfig().getNoneJapanizeMarker();
+        String marker = lunaChat.getLunaChatConfig().getNoneJapanizeMarker();
         if (!marker.isEmpty() && event.getPreReplaceMessage().startsWith(marker)) return false;
 
         // jp off
@@ -49,11 +48,11 @@ public class LunaChatListener implements Listener {
      * @param event チャット情報
      */
     @EventHandler
-    public void onChat(LunaChatBungeeChannelChatEvent event) {
+    public void onChat(LunaChatBukkitChannelChatEvent event) {
         if(!event.getChannel().isGlobalChannel()) return;
 
-        ProxyServer.getInstance().getScheduler().schedule(DiscordConnect.getInstance(), () -> {
-            LunaChatBungee lunaChat = DiscordConnect.getInstance().getLunaChat();
+        Bukkit.getScheduler().runTaskLater(DiscordConnect.getInstance(), () -> {
+            LunaChatBukkit lunaChat = DiscordConnect.getInstance().getLunaChat();
             String message;
             if(shouldJapanize(event)) {
                 String jp = lunaChat.getLunaChatAPI().japanize(event.getNgMaskedMessage(), JapanizeType.GOOGLE_IME);
@@ -68,6 +67,6 @@ public class LunaChatListener implements Listener {
                             .replace("{sender}", event.getMember().getDisplayName())
                             .replace("{original}", MarkdownConverter.toDiscordMessage(components))
             );
-        }, 0L, TimeUnit.SECONDS);
+        }, 0);
     }
 }

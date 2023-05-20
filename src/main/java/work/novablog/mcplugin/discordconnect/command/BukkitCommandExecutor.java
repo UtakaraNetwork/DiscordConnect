@@ -1,31 +1,28 @@
 package work.novablog.mcplugin.discordconnect.command;
 
-import net.md_5.bungee.api.CommandSender;
-import net.md_5.bungee.api.chat.TextComponent;
-import net.md_5.bungee.api.plugin.Command;
-import net.md_5.bungee.api.plugin.TabExecutor;
+import com.google.common.collect.Lists;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabExecutor;
+import org.jetbrains.annotations.NotNull;
 import work.novablog.mcplugin.discordconnect.util.Message;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
 /**
  * Minecraftコマンドの呼び出し等を行うクラス
  */
-public class BungeeCommandExecutor extends Command implements TabExecutor {
-    private ArrayList<BungeeSubCommandBuilder> subCommands;
-    private String permission;
+public class BukkitCommandExecutor implements TabExecutor {
+    private final ArrayList<BungeeSubCommandBuilder> subCommands;
+    private final String permission;
 
     /**
      * コンストラクタ
-     * @param name コマンド名
      * @param permission 権限
-     * @param aliases エイリアス
      */
-    public BungeeCommandExecutor(String name, String permission, String... aliases) {
-        super(name, permission, aliases);
+    public BukkitCommandExecutor(String permission) {
         subCommands = new ArrayList<>();
         this.permission = permission;
     }
@@ -44,18 +41,18 @@ public class BungeeCommandExecutor extends Command implements TabExecutor {
      * @param args 引数
      */
     @Override
-    public void execute(CommandSender commandSender, String[] args) {
+    public boolean onCommand(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         //権限の確認
         if(!commandSender.hasPermission(permission)) {
-            commandSender.sendMessage(new TextComponent(Message.bungeeCommandDenied.toString()));
-            return;
+            commandSender.sendMessage(Message.bungeeCommandDenied.toString());
+            return true;
         }
         //引数の確認
         if(args.length == 0) {
             for(BungeeSubCommandBuilder subCommand : subCommands) {
                 if(subCommand.isDefault) subCommand.action.execute(commandSender, new String[1]);
             }
-            return;
+            return true;
         }
 
         //サブコマンドを選択
@@ -67,14 +64,14 @@ public class BungeeCommandExecutor extends Command implements TabExecutor {
             }
         }
         if(execCmd == null) {
-            commandSender.sendMessage(new TextComponent(Message.bungeeCommandNotFound.toString()));
-            return;
+            commandSender.sendMessage(Message.bungeeCommandNotFound.toString());
+            return true;
         }
 
         //権限の確認
         if (execCmd.subPermission != null && !commandSender.hasPermission(execCmd.subPermission)) {
-            commandSender.sendMessage(new TextComponent(Message.bungeeCommandDenied.toString()));
-            return;
+            commandSender.sendMessage(Message.bungeeCommandDenied.toString());
+            return true;
         }
 
         String[] commandArgs = new String[args.length - 1];
@@ -82,12 +79,14 @@ public class BungeeCommandExecutor extends Command implements TabExecutor {
 
         //引数の確認
         if(commandArgs.length < execCmd.requireArgs) {
-            commandSender.sendMessage(new TextComponent(Message.bungeeCommandSyntaxError.toString()));
-            return;
+            commandSender.sendMessage(Message.bungeeCommandSyntaxError.toString());
+            return true;
         }
 
         execCmd.action.execute(commandSender, commandArgs);
+        return true;
     }
+
 
     /**
      * タブ補完機能
@@ -96,13 +95,13 @@ public class BungeeCommandExecutor extends Command implements TabExecutor {
      * @return 補完リスト
      */
     @Override
-    public Iterable<String> onTabComplete(CommandSender commandSender, String[] args) {
+    public List<String> onTabComplete(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String alias, @NotNull String[] args) {
         //引数がなかったら
         if (args.length == 0) {
             return Collections.emptyList();
         }
 
-        Set<String> match = new HashSet();
+        List<String> match = Lists.newArrayList();
         args[0] = args[0].toLowerCase();
         if(args.length == 1) {
             for(BungeeSubCommandBuilder subCommand : subCommands) {
@@ -119,7 +118,7 @@ public class BungeeCommandExecutor extends Command implements TabExecutor {
     public class BungeeSubCommandBuilder {
         private final String alias;
         private final String subPermission;
-        private final BungeeCommandBase action;
+        private final BukkitCommandBase action;
         private boolean isDefault;
         private int requireArgs;
 
@@ -129,14 +128,14 @@ public class BungeeCommandExecutor extends Command implements TabExecutor {
          * @param subPermission 権限
          * @param action 実行する処理
          */
-        public BungeeSubCommandBuilder(String alias, String subPermission, BungeeCommandBase action) {
+        public BungeeSubCommandBuilder(String alias, String subPermission, BukkitCommandBase action) {
             this.alias = alias;
             this.subPermission = permission + "." + subPermission;
             this.action = action;
             isDefault = false;
             requireArgs = 0;
         }
-        public BungeeSubCommandBuilder(String alias, BungeeCommandBase action) {
+        public BungeeSubCommandBuilder(String alias, BukkitCommandBase action) {
             this.alias = alias;
             this.subPermission = null;
             this.action = action;

@@ -1,0 +1,14 @@
+name: DiscordConnect-spigot
+version: ${pluginVersion}
+authors:
+  - nova27
+  - Necnion8
+main: work.novablog.mcplugin.discordconnect.DiscordConnect
+description: "Mutual chat transmission between Discord and Minecraft. (for Spigot fork)"
+softdepend: [LunaChat]
+prefix: DiscordConnect
+
+commands:
+  discordconnect:
+    permission: discordconnect.command
+    aliases: [discon]

@@ -1,6 +1,5 @@
 package work.novablog.mcplugin.discordconnect.util;
 
-import com.gmail.necnionch.myplugin.n8chatcaster.bungee.N8ChatCasterAPI;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -10,15 +9,14 @@ import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
+import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 import work.novablog.mcplugin.discordconnect.DiscordConnect;
-import work.novablog.mcplugin.discordconnect.listener.ChatCasterListener;
 import work.novablog.mcplugin.discordconnect.listener.DiscordListener;
 import work.novablog.mcplugin.discordconnect.listener.LunaChatListener;
 
 import javax.security.auth.login.LoginException;
 import java.awt.*;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -62,11 +60,9 @@ public class BotManager implements EventListener {
     public void botShutdown(boolean isRestart) {
         if(!isActive) return;
 
-        DiscordConnect.getInstance().getProxy().getPluginManager().unregisterListener(DiscordConnect.getInstance().getBungeeListener());
-        ChatCasterListener chatCasterListener = DiscordConnect.getInstance().getChatCasterListener();
+        HandlerList.unregisterAll(DiscordConnect.getInstance().getBungeeListener());
         LunaChatListener lunaChatListener = DiscordConnect.getInstance().getLunaChatListener();
-        if(chatCasterListener != null)  DiscordConnect.getInstance().getProxy().getPluginManager().unregisterListener(chatCasterListener);
-        if(lunaChatListener != null)  DiscordConnect.getInstance().getProxy().getPluginManager().unregisterListener(lunaChatListener);
+        if(lunaChatListener != null)  HandlerList.unregisterAll(lunaChatListener);
         DiscordConnect.getInstance().getLogger().info(Message.normalShutdown.toString());
 
         if(isRestart) {
@@ -139,14 +135,12 @@ public class BotManager implements EventListener {
                 return;
             }
             chatChannelSenders.forEach(Thread::start);
-            DiscordConnect.getInstance().getProxy().getPluginManager().registerListener(DiscordConnect.getInstance(), DiscordConnect.getInstance().getBungeeListener());
-            ChatCasterListener chatCasterListener = DiscordConnect.getInstance().getChatCasterListener();
+            DiscordConnect.getInstance().getServer().getPluginManager().registerEvents(DiscordConnect.getInstance().getBungeeListener(), DiscordConnect.getInstance());
             LunaChatListener lunaChatListener = DiscordConnect.getInstance().getLunaChatListener();
-            if(chatCasterListener != null) DiscordConnect.getInstance().getProxy().getPluginManager().registerListener(DiscordConnect.getInstance(), chatCasterListener);
-            if(lunaChatListener != null) DiscordConnect.getInstance().getProxy().getPluginManager().registerListener(DiscordConnect.getInstance(), lunaChatListener);
+            if(lunaChatListener != null) DiscordConnect.getInstance().getServer().getPluginManager().registerEvents(lunaChatListener, DiscordConnect.getInstance());
             DiscordConnect.getInstance().getBotManager().updateGameName(
-                    DiscordConnect.getInstance().getProxy().getPlayers().size(),
-                    DiscordConnect.getInstance().getProxy().getConfig().getPlayerLimit()
+                    DiscordConnect.getInstance().getServer().getOnlinePlayers().size(),
+                    DiscordConnect.getInstance().getServer().getMaxPlayers()
             );
 
             DiscordConnect.getInstance().getLogger().info(Message.botIsReady.toString());

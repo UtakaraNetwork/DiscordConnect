@@ -1,43 +1,31 @@
 package work.novablog.mcplugin.discordconnect;
 
-import com.github.ucchyocean.lc3.LunaChatBungee;
-import com.gmail.necnionch.myplugin.n8chatcaster.bungee.N8ChatCasterAPI;
-import com.gmail.necnionch.myplugin.n8chatcaster.bungee.N8ChatCasterPlugin;
-import net.md_5.bungee.api.plugin.Plugin;
-import net.md_5.bungee.config.Configuration;
-import net.md_5.bungee.config.ConfigurationProvider;
-import net.md_5.bungee.config.YamlConfiguration;
-import org.bstats.bungeecord.Metrics;
-import work.novablog.mcplugin.discordconnect.command.BungeeMinecraftCommand;
-import work.novablog.mcplugin.discordconnect.listener.BungeeListener;
-import work.novablog.mcplugin.discordconnect.listener.ChatCasterListener;
+import com.github.ucchyocean.lc3.LunaChatBukkit;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.java.JavaPlugin;
+import work.novablog.mcplugin.discordconnect.command.BukkitMinecraftCommand;
+import work.novablog.mcplugin.discordconnect.listener.BukkitListener;
 import work.novablog.mcplugin.discordconnect.listener.LunaChatListener;
 import work.novablog.mcplugin.discordconnect.util.BotManager;
 import work.novablog.mcplugin.discordconnect.util.GithubAPI;
 import work.novablog.mcplugin.discordconnect.util.Message;
 
-import javax.annotation.Nullable;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Properties;
+import java.util.*;
 
-public final class DiscordConnect extends Plugin {
+public final class DiscordConnect extends JavaPlugin {
     private static final int CONFIG_LATEST = 4;
     private static final String pluginDownloadLink = "https://github.com/nova-27/DiscordConnect/releases";
 
     private static DiscordConnect instance;
     private BotManager botManager;
     private Properties langData;
-    private BungeeListener bungeeListener;
+    private BukkitListener bukkitListener;
 
-    private N8ChatCasterAPI chatCasterAPI;
-    private ChatCasterListener chatCasterListener;
-
-    private LunaChatBungee lunaChat;
+    private LunaChatBukkit lunaChat;
     private LunaChatListener lunaChatListener;
 
     /**
@@ -68,31 +56,15 @@ public final class DiscordConnect extends Plugin {
      * BungeeListenerを返す
      * @return BungeeListener
      */
-    public BungeeListener getBungeeListener() {
-        return bungeeListener;
-    }
-
-    /**
-     * ChatCasterAPIを返す
-     * @return chatCasterAPI
-     */
-    public @Nullable N8ChatCasterAPI getChatCasterAPI() {
-        return chatCasterAPI;
-    }
-
-    /**
-     * ChatCasterListenerを返す
-     * @return chatCasterListener
-     */
-    public ChatCasterListener getChatCasterListener() {
-        return chatCasterListener;
+    public BukkitListener getBungeeListener() {
+        return bukkitListener;
     }
 
     /**
      * LunaChatを返す
      * @return lunaChat
      */
-    public LunaChatBungee getLunaChat() {
+    public LunaChatBukkit getLunaChat() {
         return lunaChat;
     }
 
@@ -109,19 +81,12 @@ public final class DiscordConnect extends Plugin {
         instance = this;
 
         //bstats
-        new Metrics(this, 7990);
-
-        //N8ChatCasterと連携
-        Plugin temp = getProxy().getPluginManager().getPlugin("N8ChatCaster");
-        if (temp instanceof N8ChatCasterPlugin) {
-            chatCasterAPI = (((N8ChatCasterPlugin) temp).getChatCasterApi());
-            chatCasterListener = new ChatCasterListener();
-        }
+//        new Metrics(this, 7990);
 
         //LunaChatと連携
-        temp = getProxy().getPluginManager().getPlugin("LunaChat");
-        if(temp instanceof LunaChatBungee) {
-            lunaChat = (LunaChatBungee) temp;
+        Plugin temp = getServer().getPluginManager().getPlugin("LunaChat");
+        if(temp instanceof LunaChatBukkit) {
+            lunaChat = (LunaChatBukkit) temp;
             lunaChatListener = new LunaChatListener();
         }
 
@@ -129,7 +94,8 @@ public final class DiscordConnect extends Plugin {
         loadConfig();
 
         //コマンドの追加
-        getProxy().getPluginManager().registerCommand(this, new BungeeMinecraftCommand());
+        Optional.ofNullable(getCommand("discordconnect"))
+                .ifPresent(cmd -> cmd.setExecutor(new BukkitMinecraftCommand()));
     }
 
     public void loadConfig() {
@@ -147,8 +113,8 @@ public final class DiscordConnect extends Plugin {
         File languageFile = new File(getDataFolder(), "message.yml");
         if (!languageFile.exists()) {
             //存在しなければコピー
-            InputStream src = getResourceAsStream(Locale.getDefault().toString() + ".properties");
-            if(src == null) src = getResourceAsStream("ja_JP.properties");
+            InputStream src = getResource(Locale.getDefault().toString() + ".properties");
+            if(src == null) src = getResource("ja_JP.properties");
 
             try {
                 Files.copy(src, languageFile.toPath());
@@ -171,7 +137,7 @@ public final class DiscordConnect extends Plugin {
         File pluginConfig = new File(getDataFolder(), "config.yml");
         if (!pluginConfig.exists()) {
             //存在しなければコピー
-            InputStream src = getResourceAsStream("config.yml");
+            InputStream src = getResource("config.yml");
 
             try {
                 Files.copy(src, pluginConfig.toPath());
@@ -181,12 +147,7 @@ public final class DiscordConnect extends Plugin {
         }
 
         //config取得・bot起動
-        Configuration pluginConfiguration = null;
-        try {
-            pluginConfiguration = ConfigurationProvider.getProvider(YamlConfiguration.class).load(pluginConfig);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        YamlConfiguration pluginConfiguration = YamlConfiguration.loadConfiguration(pluginConfig);
 
         int configVersion = pluginConfiguration.getInt("configVersion", 0);
         //configが古ければ新しいconfigをコピー
@@ -199,9 +160,9 @@ public final class DiscordConnect extends Plugin {
 
                 //新しいconfigをコピー
                 pluginConfig = new File(getDataFolder(), "config.yml");
-                InputStream src = getResourceAsStream("config.yml");
+                InputStream src = getResource("config.yml");
                 Files.copy(src, pluginConfig.toPath());
-                pluginConfiguration = ConfigurationProvider.getProvider(YamlConfiguration.class).load(pluginConfig);
+                pluginConfiguration = YamlConfiguration.loadConfiguration(pluginConfig);
 
                 //古いlangファイルをリネーム
                 File old_lang = new File(getDataFolder(), "message_old.yml");
@@ -210,8 +171,8 @@ public final class DiscordConnect extends Plugin {
 
                 //新しいlangファイルをコピー
                 languageFile = new File(getDataFolder(), "message.yml");
-                src = getResourceAsStream(Locale.getDefault().toString() + ".properties");
-                if(src == null) src = getResourceAsStream("ja_JP.properties");
+                src = getResource(Locale.getDefault().toString() + ".properties");
+                if(src == null) src = getResource("ja_JP.properties");
                 Files.copy(src, languageFile.toPath());
                 InputStreamReader inputStreamReader = new InputStreamReader(new FileInputStream(languageFile), StandardCharsets.UTF_8);
                 BufferedReader bufferedReader = new BufferedReader(Objects.requireNonNull(inputStreamReader));
@@ -231,7 +192,7 @@ public final class DiscordConnect extends Plugin {
         String toMinecraftFormat = pluginConfiguration.getString("toMinecraftFormat");
         String toDiscordFormat = pluginConfiguration.getString("toDiscordFormat");
         String japanizeFormat = pluginConfiguration.getString("japanizeFormat");
-        bungeeListener = new BungeeListener(toDiscordFormat);
+        bukkitListener = new BukkitListener(toDiscordFormat);
         if(lunaChatListener != null) {
             lunaChatListener.setToDiscordFormat(toDiscordFormat);
             lunaChatListener.setJapanizeFormat(japanizeFormat);
