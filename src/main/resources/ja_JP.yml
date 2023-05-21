@@ -15,13 +15,19 @@ updateDownloadLink: "ダウンロードリンク: {link}"
 updateCheckFailed: "アップデートの確認に失敗しました"
 pluginIsLatest: "プラグインは最新バージョンです（{current}）"
 
+accountLinkLinkedToDiscord: "Minecraftアカウント {mcid} と連携しました！"
+accountLinkLinked: "§6Discordアカウント §f{user}§6 と連携しました！"
+accountLinkShowCode: "§eDiscordボット §f{bot}§e に §6{code}§e を送信してください"
+
 bungeeCommandDenied: "§cあなたはこのコマンドを実行する権限を持っていません！"
 bungeeCommandNotFound: "§cコマンドが見つかりません！"
 bungeeCommandSyntaxError: "§c引数が足りません！ヘルプを参照してください。"
+bungeeCommandPlayerOnly: "§cプレイヤーのみ実行できるコマンドです！"
 
 bungeeCommandHelpLine1: "§f---DiscordConnectのコマンド一覧---"
 bungeeCommandHelpHelpcmd: "§f/discon help ・・・ DiscordConnectのコマンド一覧を表示します"
 bungeeCommandHelpReloadcmd: "§f/discon reload ・・・ configを再読込します"
+bungeeCommandHelpLinkcmd: "§f/discon link ・・・ Discordアカウントと連携します"
 
 discordCommandDenied: ":warning: このコマンドを実行できるのは管理者だけです！"
 discordCommandNotFound: ":grey_question: コマンドが見つかりません！"

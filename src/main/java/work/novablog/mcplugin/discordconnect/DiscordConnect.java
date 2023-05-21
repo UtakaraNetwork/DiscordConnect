@@ -12,6 +12,7 @@ import work.novablog.mcplugin.discordconnect.command.DiscordCommandExecutor;
 import work.novablog.mcplugin.discordconnect.command.DiscordStandardCommand;
 import work.novablog.mcplugin.discordconnect.listener.BukkitListener;
 import work.novablog.mcplugin.discordconnect.listener.LunaChatListener;
+import work.novablog.mcplugin.discordconnect.util.AccountManager;
 import work.novablog.mcplugin.discordconnect.util.ConfigManager;
 import work.novablog.mcplugin.discordconnect.util.GithubAPI;
 import work.novablog.mcplugin.discordconnect.util.discord.BotManager;
@@ -19,6 +20,7 @@ import work.novablog.mcplugin.discordconnect.util.discord.DiscordWebhookSender;
 
 import javax.annotation.Nullable;
 import javax.security.auth.login.LoginException;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Optional;
@@ -36,6 +38,8 @@ public final class DiscordConnect extends JavaPlugin {
     private UUIDCacheData uuidCacheData;
     private LunaChatListener lunaChatListener;
 
+    private final AccountManager accountManager = new AccountManager(new File(getDataFolder(), "accounts.yml"));
+
     /**
      * インスタンスを返します
      * @return インスタンス
@@ -50,6 +54,10 @@ public final class DiscordConnect extends JavaPlugin {
      */
     public @Nullable BotManager getBotManager() {
         return botManager;
+    }
+
+    public AccountManager getAccountManager() {
+        return accountManager;
     }
 
     /**
@@ -120,6 +128,7 @@ public final class DiscordConnect extends JavaPlugin {
             e.printStackTrace();
             return;
         }
+        accountManager.loadFile();
 
         discordCommandExecutor.setAdminRole(configManager.adminRole);
 

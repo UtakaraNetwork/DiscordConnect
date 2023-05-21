@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.SelfUser;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.events.ReadyEvent;
@@ -68,7 +69,7 @@ public class BotManager implements EventListener {
             @Nullable Boolean allowDispatchCommandFromConsoleChannel
     ) throws LoginException {
         //ログインする
-        bot = JDABuilder.create(token, GatewayIntent.GUILD_MEMBERS, GatewayIntent.GUILD_MESSAGES)
+        bot = JDABuilder.create(token, GatewayIntent.GUILD_MEMBERS, GatewayIntent.GUILD_MESSAGES, GatewayIntent.DIRECT_MESSAGES)
                 .addEventListeners(this)
                 .setAutoReconnect(true)
                 .build();
@@ -240,5 +241,9 @@ public class BotManager implements EventListener {
                         .replace("{max}", maxPlayersString)
                 )
         );
+    }
+
+    public SelfUser getBotUser() {
+        return bot.getSelfUser();
     }
 }

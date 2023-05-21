@@ -125,11 +125,16 @@ public class ConfigManager {
         configReloaded,
         configPropertyIsNull,
         dispatchedCommand,
+        bungeeCommandPlayerOnly,
 
         updateNotice,
         updateDownloadLink,
         updateCheckFailed,
         pluginIsLatest,
+
+        accountLinkLinkedToDiscord,
+        accountLinkLinked,
+        accountLinkShowCode,
 
         bungeeCommandDenied,
         bungeeCommandNotFound,
@@ -138,6 +143,7 @@ public class ConfigManager {
         bungeeCommandHelpLine1,
         bungeeCommandHelpHelpcmd,
         bungeeCommandHelpReloadcmd,
+        bungeeCommandHelpLinkcmd,
 
         discordCommandDenied,
         discordCommandNotFound,

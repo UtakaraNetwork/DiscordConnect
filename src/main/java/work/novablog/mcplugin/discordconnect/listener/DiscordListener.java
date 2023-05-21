@@ -2,6 +2,7 @@ package work.novablog.mcplugin.discordconnect.listener;
 
 import com.gmail.necnionch.myapp.markdownconverter.MarkComponent;
 import com.gmail.necnionch.myapp.markdownconverter.MarkdownConverter;
+import net.dv8tion.jda.api.entities.ChannelType;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.md_5.bungee.api.chat.BaseComponent;
@@ -9,17 +10,18 @@ import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.HumanEntity;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import work.novablog.mcplugin.discordconnect.DiscordConnect;
 import work.novablog.mcplugin.discordconnect.command.DiscordCommandExecutor;
+import work.novablog.mcplugin.discordconnect.util.AccountManager;
 import work.novablog.mcplugin.discordconnect.util.ConfigManager;
 import work.novablog.mcplugin.discordconnect.util.discord.BotManager;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.StringJoiner;
+import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class DiscordListener extends ListenerAdapter {
@@ -61,6 +63,12 @@ public class DiscordListener extends ListenerAdapter {
         if (receivedMessage.getAuthor().isBot()) return;
         BotManager botManager = DiscordConnect.getInstance().getBotManager();
         assert botManager != null;
+
+        if (ChannelType.PRIVATE.equals(receivedMessage.getChannel().getType())) {
+            if (processLinkCodeMessage(receivedMessage, receivedMessage.getAuthor().getIdLong()))
+                return;
+        }
+
         if (botManager.getChatChannelSenders().stream()
                 .noneMatch(sender -> sender.getChannelID() == receivedMessage.getChannel().getIdLong()) && !(consoleChannelId == receivedMessage.getChannel().getIdLong()))
             return;
@@ -155,5 +163,36 @@ public class DiscordListener extends ListenerAdapter {
             //メッセージを削除
             receivedMessage.getMessage().delete().queue();
         }
+    }
+
+    private boolean processLinkCodeMessage(MessageReceivedEvent event, long userId) {
+        String content = event.getMessage().getContentStripped();
+        AccountManager mgr = DiscordConnect.getInstance().getAccountManager();
+
+        Matcher matcher = Pattern.compile("(\\d+)").matcher(content);
+        while (matcher.find()) {
+            String code = matcher.group(1);
+            UUID uuid = mgr.removeMinecraftIdByLinkCode(code);
+            if (uuid == null)
+                continue;
+
+            mgr.setLinkedDiscordId(uuid, userId);
+            mgr.saveFile();
+
+            Optional<Player> player = Optional.ofNullable(Bukkit.getOfflinePlayer(uuid).getPlayer());
+            String mcid = player.map(HumanEntity::getName).orElse("?");
+
+            try {
+                player.ifPresent(p -> p.sendMessage(ConfigManager.Message.accountLinkLinked.toString()
+                        .replaceAll("\\{user}", event.getAuthor().getName())));
+                event.getChannel().sendMessage(ConfigManager.Message.accountLinkLinkedToDiscord.toString()
+                                .replaceAll("\\{mcid}", mcid))
+                        .queue();
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
+            return true;
+        }
+        return false;
     }
 }
