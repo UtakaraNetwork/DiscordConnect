@@ -92,7 +92,6 @@ public class BukkitCommandExecutor implements TabExecutor {
      * @param args 引数
      * @return 補完リスト
      */
-
     @Override
     public List<String> onTabComplete(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String alias, @NotNull String[] args) {
         //引数がなかったら
@@ -103,7 +102,7 @@ public class BukkitCommandExecutor implements TabExecutor {
         ArrayList<String> match = new ArrayList<>();
         args[0] = args[0].toLowerCase();
         if(args.length == 1) {
-            subCommands.stream().filter(subCommand -> subCommand.alias.startsWith(args[0]) && commandSender.hasPermission(subCommand.subPermission))
+            subCommands.stream().filter(subCommand -> subCommand.alias.startsWith(args[0]) && (subCommand.subPermission == null || commandSender.hasPermission(subCommand.subPermission)))
                     .forEach(subCommand -> match.add(subCommand.alias));
         }
 
