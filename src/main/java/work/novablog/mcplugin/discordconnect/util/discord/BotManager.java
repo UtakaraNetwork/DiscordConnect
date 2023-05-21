@@ -66,7 +66,8 @@ public class BotManager implements EventListener {
             @NotNull DiscordCommandExecutor discordCommandExecutor,
             @NotNull Boolean enableConsoleChannel,
             @Nullable Long consoleChannelId,
-            @Nullable Boolean allowDispatchCommandFromConsoleChannel
+            @Nullable Boolean allowDispatchCommandFromConsoleChannel,
+            @Nullable String linkedToConsoleCommand
     ) throws LoginException {
         //ログインする
         bot = JDABuilder.create(token, GatewayIntent.GUILD_MEMBERS, GatewayIntent.GUILD_MESSAGES, GatewayIntent.DIRECT_MESSAGES)
@@ -74,7 +75,7 @@ public class BotManager implements EventListener {
                 .setAutoReconnect(true)
                 .build();
         bot.addEventListener(
-                new DiscordListener(prefix, toMinecraftFormat, fromDiscordToDiscordName, discordCommandExecutor, consoleChannelId, allowDispatchCommandFromConsoleChannel)
+                new DiscordListener(prefix, toMinecraftFormat, fromDiscordToDiscordName, discordCommandExecutor, consoleChannelId, allowDispatchCommandFromConsoleChannel, linkedToConsoleCommand)
         );
 
         this.chatChannelIds = chatChannelIds;

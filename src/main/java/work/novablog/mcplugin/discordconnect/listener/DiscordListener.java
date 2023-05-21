@@ -3,6 +3,7 @@ package work.novablog.mcplugin.discordconnect.listener;
 import com.gmail.necnionch.myapp.markdownconverter.MarkComponent;
 import com.gmail.necnionch.myapp.markdownconverter.MarkdownConverter;
 import net.dv8tion.jda.api.entities.ChannelType;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.md_5.bungee.api.chat.BaseComponent;
@@ -10,7 +11,6 @@ import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
-import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +31,7 @@ public class DiscordListener extends ListenerAdapter {
     private final DiscordCommandExecutor discordCommandExecutor;
     private final Long consoleChannelId;
     private final Boolean allowDispatchCommandFromConsoleChannel;
+    private final @Nullable String linkedToConsoleCommand;
 
     /**
      * Discordのイベントをリッスンするインスタンスを生成します
@@ -48,7 +49,8 @@ public class DiscordListener extends ListenerAdapter {
             @NotNull String fromDiscordToDiscordName,
             @NotNull DiscordCommandExecutor discordCommandExecutor,
             @Nullable Long consoleChannelId,
-            @Nullable Boolean allowDispatchCommandFromConsoleChannel
+            @Nullable Boolean allowDispatchCommandFromConsoleChannel,
+            @Nullable String linkedToConsoleCommand
     ) {
         this.prefix = prefix;
         this.toMinecraftFormat = toMinecraftFormat;
@@ -56,6 +58,7 @@ public class DiscordListener extends ListenerAdapter {
         this.discordCommandExecutor = discordCommandExecutor;
         this.consoleChannelId = consoleChannelId;
         this.allowDispatchCommandFromConsoleChannel = allowDispatchCommandFromConsoleChannel;
+        this.linkedToConsoleCommand = linkedToConsoleCommand;
     }
 
     @Override
@@ -176,20 +179,43 @@ public class DiscordListener extends ListenerAdapter {
             if (uuid == null)
                 continue;
 
+            Player player = Optional.ofNullable(Bukkit.getOfflinePlayer(uuid).getPlayer()).orElse(null);
+            if (player == null)
+                return true;
+
             mgr.setLinkedDiscordId(uuid, userId);
             mgr.saveFile();
 
-            Optional<Player> player = Optional.ofNullable(Bukkit.getOfflinePlayer(uuid).getPlayer());
-            String mcid = player.map(HumanEntity::getName).orElse("?");
+            String mcid = player.getName();
 
+            User author = event.getAuthor();
             try {
-                player.ifPresent(p -> p.sendMessage(ConfigManager.Message.accountLinkLinked.toString()
-                        .replaceAll("\\{user}", event.getAuthor().getName())));
+                player.sendMessage(ConfigManager.Message.accountLinkLinked.toString()
+                        .replaceAll("\\{user}", author.getAsTag()));
+
                 event.getChannel().sendMessage(ConfigManager.Message.accountLinkLinkedToDiscord.toString()
                                 .replaceAll("\\{mcid}", mcid))
                         .queue();
+
             } catch (Throwable e) {
                 e.printStackTrace();
+            }
+
+            String linkedCommand = linkedToConsoleCommand;
+            if (linkedCommand != null && !linkedCommand.isEmpty()) {
+                Bukkit.getScheduler().callSyncMethod(DiscordConnect.getInstance(), () -> {
+                    try {
+                        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), linkedCommand
+                                .replaceAll("\\{playerId}", player.getUniqueId().toString())
+                                .replaceAll("\\{discordId}", author.getId())
+                                .replaceAll("\\{player}", player.getName())
+                                .replaceAll("\\{discord}", author.getAsTag())
+                        );
+                    } catch (Throwable e) {
+                        e.printStackTrace();
+                    }
+                    return null;
+                });
             }
             return true;
         }

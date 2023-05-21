@@ -37,6 +37,8 @@ public class ConfigManager {
     public String dummyServerName;
     public String lunaChatJapanizeFormat;
 
+    public String linkedToConsoleCommand;
+
     /**
      * configの読み出し、保持を行うインスタンスを生成します
      * @param plugin プラグインのメインクラス
@@ -79,6 +81,8 @@ public class ConfigManager {
         hiddenServers = pluginConfig.getStringList("hiddenServers");
         dummyServerName = pluginConfig.getString("dummyServerName");
         lunaChatJapanizeFormat = pluginConfig.getString("japanizeFormat");
+
+        linkedToConsoleCommand = pluginConfig.getString("linkedToConsoleCommand");
     }
 
     private YamlConfiguration getConfigData(Plugin plugin) throws IOException {

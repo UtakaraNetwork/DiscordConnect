@@ -143,7 +143,8 @@ public final class DiscordConnect extends JavaPlugin {
                     discordCommandExecutor,
                     configManager.isEnableConsoleChannel,
                     configManager.consoleChannelId,
-                    configManager.allowDispatchCommandFromConsoleChannel
+                    configManager.allowDispatchCommandFromConsoleChannel,
+                    configManager.linkedToConsoleCommand
             );
         } catch (LoginException e) {
             getLogger().severe(ConfigManager.Message.invalidToken.toString());

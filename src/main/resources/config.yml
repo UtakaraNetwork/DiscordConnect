@@ -22,5 +22,13 @@ fromDiscordToDiscordName: "{nickName}"
 # LunaChat使用時にのみ有効 (Only when using the LunaChat plugin)
 japanizeFormat: "__JP__: {japanized}"
 
+# Discordアカウントがリンクされた時にコマンドを実行します
+# 以下の値が利用できます
+#   {player}    --- プレイヤー名
+#   {playerId}  --- プレイヤーUUID
+#   {discord}   --- Discordユーザー名
+#   {discordId} --- DiscordユーザーID
+linkedToConsoleCommand: ""
+
 # この値は変更しないでください！ (Don't change the value!)
 configVersion: 4
