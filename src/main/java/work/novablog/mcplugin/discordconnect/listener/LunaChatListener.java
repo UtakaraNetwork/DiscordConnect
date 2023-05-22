@@ -3,6 +3,7 @@ package work.novablog.mcplugin.discordconnect.listener;
 import com.github.ucchyocean.lc3.UUIDCacheData;
 import com.github.ucchyocean.lc3.bukkit.event.LunaChatBukkitChannelChatEvent;
 import com.github.ucchyocean.lc3.bukkit.event.LunaChatBukkitPostJapanizeEvent;
+import com.github.ucchyocean.lc3.util.Utility;
 import com.gmail.necnionch.myapp.markdownconverter.MarkComponent;
 import com.gmail.necnionch.myapp.markdownconverter.MarkdownConverter;
 import org.bukkit.event.EventHandler;
@@ -12,6 +13,7 @@ import work.novablog.mcplugin.discordconnect.DiscordConnect;
 import work.novablog.mcplugin.discordconnect.util.ConvertUtil;
 import work.novablog.mcplugin.discordconnect.util.discord.DiscordWebhookSender;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.UUID;
 
@@ -71,6 +73,7 @@ public class LunaChatListener implements Listener {
     @EventHandler
     public void onChat(LunaChatBukkitChannelChatEvent event) {
         if(!event.getChannel().isGlobalChannel()) return;
+        if (willJapanize(event.getPreReplaceMessage())) return;
         ArrayList<DiscordWebhookSender> discordWebhookSenders = DiscordConnect.getInstance().getDiscordWebhookSenders();
 
         MarkComponent[] components = MarkdownConverter.fromMinecraftMessage(event.getNgMaskedMessage(), '&');
@@ -89,4 +92,15 @@ public class LunaChatListener implements Listener {
                 convertedMessage
         ));
     }
+
+    /**
+     * 与えられた文字列がLunaChatによって日本語化されるかを判定します
+     * @param message 文字列
+     */
+    private boolean willJapanize(String message) {
+        final String strippedMessage = Utility.stripColorCode(message);
+        return strippedMessage.getBytes(StandardCharsets.UTF_8).length <= strippedMessage.length() &&
+                !strippedMessage.matches("[\\uFF61-\\uFF9F]+");
+    }
+
 }
