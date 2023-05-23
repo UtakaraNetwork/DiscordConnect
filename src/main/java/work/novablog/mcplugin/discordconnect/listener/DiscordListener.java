@@ -185,7 +185,7 @@ public class DiscordListener extends ListenerAdapter {
             if (player == null)
                 return true;
 
-            mgr.linkedDiscordId(uuid, userId).whenComplete((v, th) -> th.printStackTrace());
+            mgr.linkDiscordId(uuid, userId).whenComplete((v, th) -> th.printStackTrace());
 
             String mcid = player.getName();
 

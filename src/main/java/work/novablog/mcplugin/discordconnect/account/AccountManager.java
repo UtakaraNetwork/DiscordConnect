@@ -41,7 +41,7 @@ public abstract class AccountManager {
 
     public abstract CompletableFuture<@Nullable Long> getLinkedDiscordId(@NotNull UUID minecraftId);
 
-    public abstract CompletableFuture<Void> linkedDiscordId(@NotNull UUID minecraftId, long discordId);
+    public abstract CompletableFuture<Void> linkDiscordId(@NotNull UUID minecraftId, long discordId);
 
     public abstract CompletableFuture<@NotNull Boolean> isLinkedMinecraft(long discordId);
 

@@ -86,7 +86,7 @@ public class YamlAccountManager extends AccountManager {
     }
 
     @Override
-    public CompletableFuture<Void> linkedDiscordId(@NotNull UUID minecraftId, long discordId) {
+    public CompletableFuture<Void> linkDiscordId(@NotNull UUID minecraftId, long discordId) {
         return runCurrent(() -> {
             discordAccounts.put(minecraftId, discordId);
         });
