@@ -3,6 +3,7 @@ package work.novablog.mcplugin.discordconnect.listener;
 import com.gmail.necnionch.myapp.markdownconverter.MarkComponent;
 import com.gmail.necnionch.myapp.markdownconverter.MarkdownConverter;
 import net.dv8tion.jda.api.entities.ChannelType;
+import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -185,41 +186,49 @@ public class DiscordListener extends ListenerAdapter {
             if (player == null)
                 return true;
 
-            mgr.linkDiscordId(uuid, userId).whenComplete((v, th) -> th.printStackTrace());
-
-            String mcid = player.getName();
-
-            User author = event.getAuthor();
-            try {
-                player.sendMessage(ConfigManager.Message.accountLinkLinked.toString()
-                        .replaceAll("\\{user}", author.getAsTag()));
-
-                event.getChannel().sendMessage(ConfigManager.Message.accountLinkLinkedToDiscord.toString()
-                                .replaceAll("\\{mcid}", mcid))
-                        .queue();
-
-            } catch (Throwable e) {
-                e.printStackTrace();
-            }
-
-            String linkedCommand = linkedToConsoleCommand;
-            if (linkedCommand != null && !linkedCommand.isEmpty()) {
-                Bukkit.getScheduler().callSyncMethod(DiscordConnect.getInstance(), () -> {
-                    try {
-                        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), linkedCommand
-                                .replaceAll("\\{playerId}", player.getUniqueId().toString())
-                                .replaceAll("\\{discordId}", author.getId())
-                                .replaceAll("\\{player}", player.getName())
-                                .replaceAll("\\{discord}", author.getAsTag())
-                        );
-                    } catch (Throwable e) {
-                        e.printStackTrace();
-                    }
-                    return null;
-                });
-            }
+            mgr.linkDiscordId(uuid, userId).whenComplete((v, th) -> {
+                if (th != null) {
+                    th.printStackTrace();
+                } else {
+                    Bukkit.getScheduler().callSyncMethod(DiscordConnect.getInstance(), () -> {
+                        processLinkedPlayer(player, event.getAuthor(), event.getChannel());
+                        return null;
+                    });
+                }
+            });
             return true;
         }
         return false;
     }
+
+    private void processLinkedPlayer(Player player, User user, MessageChannel channel) {
+        String mcid = player.getName();
+        try {
+            player.sendMessage(ConfigManager.Message.accountLinkLinked.toString()
+                    .replaceAll("\\{user}", user.getAsTag()));
+
+            channel.sendMessage(ConfigManager.Message.accountLinkLinkedToDiscord.toString()
+                    .replaceAll("\\{mcid}", mcid))
+                    .queue();
+
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+
+        String linkedCommand = linkedToConsoleCommand;
+        if (linkedCommand != null && !linkedCommand.isEmpty()) {
+
+            try {
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), linkedCommand
+                        .replaceAll("\\{playerId}", player.getUniqueId().toString())
+                        .replaceAll("\\{discordId}", user.getId())
+                        .replaceAll("\\{player}", player.getName())
+                        .replaceAll("\\{discord}", user.getAsTag())
+                );
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
 }
