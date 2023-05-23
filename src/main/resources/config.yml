@@ -30,5 +30,19 @@ japanizeFormat: "__JP__: {japanized}"
 #   {discordId} --- DiscordユーザーID
 linkedToConsoleCommand: ""
 
+# アカウントに関するデータベース設定
+accounts:
+  dbType: yaml  # 現在は yaml のみ対応
+  database:
+    yaml:
+      file: ./accounts.yml
+    sqlite:
+      file: ./accounts.db
+    mysql:
+      username: root
+      password: "password"
+      address: localhost:3306
+      database: "discordconnect_accounts"
+
 # この値は変更しないでください！ (Don't change the value!)
 configVersion: 4

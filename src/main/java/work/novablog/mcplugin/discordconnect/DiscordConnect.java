@@ -7,12 +7,14 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
+import work.novablog.mcplugin.discordconnect.account.AccountManager;
+import work.novablog.mcplugin.discordconnect.account.db.DatabaseConfig;
+import work.novablog.mcplugin.discordconnect.account.db.YamlAccountManager;
 import work.novablog.mcplugin.discordconnect.command.BukkitCommand;
 import work.novablog.mcplugin.discordconnect.command.DiscordCommandExecutor;
 import work.novablog.mcplugin.discordconnect.command.DiscordStandardCommand;
 import work.novablog.mcplugin.discordconnect.listener.BukkitListener;
 import work.novablog.mcplugin.discordconnect.listener.LunaChatListener;
-import work.novablog.mcplugin.discordconnect.util.AccountManager;
 import work.novablog.mcplugin.discordconnect.util.ConfigManager;
 import work.novablog.mcplugin.discordconnect.util.GithubAPI;
 import work.novablog.mcplugin.discordconnect.util.discord.BotManager;
@@ -20,7 +22,6 @@ import work.novablog.mcplugin.discordconnect.util.discord.DiscordWebhookSender;
 
 import javax.annotation.Nullable;
 import javax.security.auth.login.LoginException;
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Optional;
@@ -38,7 +39,7 @@ public final class DiscordConnect extends JavaPlugin {
     private UUIDCacheData uuidCacheData;
     private LunaChatListener lunaChatListener;
 
-    private final AccountManager accountManager = new AccountManager(new File(getDataFolder(), "accounts.yml"));
+    private @Nullable AccountManager accountManager;
 
     /**
      * インスタンスを返します
@@ -56,7 +57,7 @@ public final class DiscordConnect extends JavaPlugin {
         return botManager;
     }
 
-    public AccountManager getAccountManager() {
+    public @Nullable AccountManager getAccountManager() {
         return accountManager;
     }
 
@@ -128,7 +129,14 @@ public final class DiscordConnect extends JavaPlugin {
             e.printStackTrace();
             return;
         }
-        accountManager.loadFile();
+
+        DatabaseConfig dbConfig = configManager.getAccountsDatabaseConfig();
+        if (dbConfig instanceof YamlAccountManager.DatabaseConfig) {
+            accountManager = new YamlAccountManager(getDataFolder(), ((YamlAccountManager.DatabaseConfig) dbConfig));
+        } else {
+            throw new IllegalArgumentException("Unknown database type: " + dbConfig);
+        }
+        accountManager.init().whenComplete((v, th) -> th.printStackTrace());
 
         discordCommandExecutor.setAdminRole(configManager.adminRole);
 
@@ -203,5 +211,8 @@ public final class DiscordConnect extends JavaPlugin {
     public void onDisable() {
         if(botManager != null) botManager.botShutdown(false);
         if(discordWebhookSenders != null) discordWebhookSenders.forEach(DiscordWebhookSender::shutdown);
+
+        if (accountManager != null)
+            accountManager.close().whenComplete((v, th) -> th.printStackTrace());
     }
 }

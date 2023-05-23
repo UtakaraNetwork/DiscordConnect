@@ -15,8 +15,8 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import work.novablog.mcplugin.discordconnect.DiscordConnect;
+import work.novablog.mcplugin.discordconnect.account.AccountManager;
 import work.novablog.mcplugin.discordconnect.command.DiscordCommandExecutor;
-import work.novablog.mcplugin.discordconnect.util.AccountManager;
 import work.novablog.mcplugin.discordconnect.util.ConfigManager;
 import work.novablog.mcplugin.discordconnect.util.discord.BotManager;
 
@@ -171,6 +171,8 @@ public class DiscordListener extends ListenerAdapter {
     private boolean processLinkCodeMessage(MessageReceivedEvent event, long userId) {
         String content = event.getMessage().getContentStripped();
         AccountManager mgr = DiscordConnect.getInstance().getAccountManager();
+        if (mgr == null)
+            return false;
 
         Matcher matcher = Pattern.compile("(\\d+)").matcher(content);
         while (matcher.find()) {
@@ -183,8 +185,7 @@ public class DiscordListener extends ListenerAdapter {
             if (player == null)
                 return true;
 
-            mgr.setLinkedDiscordId(uuid, userId);
-            mgr.saveFile();
+            mgr.linkedDiscordId(uuid, userId).whenComplete((v, th) -> th.printStackTrace());
 
             String mcid = player.getName();
 
