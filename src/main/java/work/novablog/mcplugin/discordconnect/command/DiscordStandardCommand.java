@@ -103,6 +103,10 @@ public class DiscordStandardCommand implements DiscordCommandListener {
 
         eb.setDescription(ConfigManager.Message.discordCommandReloading.toString());
         channel.addQueue(eb.build());
-        DiscordConnect.getInstance().init();
+        try {
+            DiscordConnect.getInstance().init();
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
     }
 }

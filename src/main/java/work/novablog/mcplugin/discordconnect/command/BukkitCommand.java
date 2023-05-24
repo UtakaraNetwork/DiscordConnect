@@ -46,7 +46,13 @@ public class BukkitCommand extends BukkitCommandExecutor {
     }
 
     public void reloadCmd(CommandSender sender, String[] args) {
-        DiscordConnect.getInstance().init();
+        try {
+            DiscordConnect.getInstance().init();
+        } catch (Throwable e) {
+            e.printStackTrace();
+            sender.sendMessage(ConfigManager.Message.configReloadFailed.toString());
+            return;
+        }
         sender.sendMessage(ConfigManager.Message.configReloaded.toString());
     }
 

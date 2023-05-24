@@ -7,6 +7,7 @@ normalShutdown: "botのシャットダウンを行います"
 botIsReady: "botのログインが完了しました"
 botRestarted: "botの再起動が完了しました"
 configReloaded: "§2configの再読込が完了しました"
+configReloadFailed: "§cconfigの再読込中にエラーが発生しました"
 configPropertyIsNull: "コンフィグの {property} プロパティが定義されていません。"
 dispatchedCommand: "ユーザーID {authorId} がコマンド {commandLine} を実行しました。"
 
