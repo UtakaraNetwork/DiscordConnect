@@ -4,10 +4,8 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
+import work.novablog.mcplugin.discordconnect.account.AccountManager;
 import work.novablog.mcplugin.discordconnect.account.db.DatabaseConfig;
-import work.novablog.mcplugin.discordconnect.account.db.MySQLAccountManager;
-import work.novablog.mcplugin.discordconnect.account.db.SQLiteAccountManager;
-import work.novablog.mcplugin.discordconnect.account.db.YamlAccountManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -96,15 +94,7 @@ public class ConfigManager {
         if (dbSection == null)
             dbSection = new YamlConfiguration();
 
-        if (dbType.equalsIgnoreCase("yaml")) {
-            accountsDatabaseConfig = new YamlAccountManager.DatabaseConfig(dbSection);
-        } else if (dbType.equalsIgnoreCase("sqlite")) {
-            accountsDatabaseConfig = new SQLiteAccountManager.DatabaseConfig(dbSection);
-        } else if (dbType.equalsIgnoreCase("mysql")) {
-            accountsDatabaseConfig = new MySQLAccountManager.DatabaseConfig(dbSection);
-        } else {
-            throw new IllegalArgumentException("Unknown database type: " + dbType);
-        }
+        accountsDatabaseConfig = AccountManager.createDatabaseConfig(dbType, dbSection);
     }
 
     private YamlConfiguration getConfigData(Plugin plugin) throws IOException {

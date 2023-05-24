@@ -9,9 +9,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import work.novablog.mcplugin.discordconnect.account.AccountManager;
 import work.novablog.mcplugin.discordconnect.account.db.DatabaseConfig;
-import work.novablog.mcplugin.discordconnect.account.db.MySQLAccountManager;
-import work.novablog.mcplugin.discordconnect.account.db.SQLiteAccountManager;
-import work.novablog.mcplugin.discordconnect.account.db.YamlAccountManager;
 import work.novablog.mcplugin.discordconnect.command.BukkitCommand;
 import work.novablog.mcplugin.discordconnect.command.DiscordCommandExecutor;
 import work.novablog.mcplugin.discordconnect.command.DiscordStandardCommand;
@@ -130,16 +127,9 @@ public final class DiscordConnect extends JavaPlugin {
         if(lunaChatListener != null) HandlerList.unregisterAll(lunaChatListener);
 
         ConfigManager configManager = new ConfigManager(this);
+
         DatabaseConfig dbConfig = configManager.getAccountsDatabaseConfig();
-        if (dbConfig instanceof YamlAccountManager.DatabaseConfig) {
-            accountManager = new YamlAccountManager(getDataFolder(), ((YamlAccountManager.DatabaseConfig) dbConfig));
-        } else if (dbConfig instanceof SQLiteAccountManager.DatabaseConfig) {
-            accountManager = new SQLiteAccountManager(getDataFolder(), ((SQLiteAccountManager.DatabaseConfig) dbConfig));
-        } else if (dbConfig instanceof MySQLAccountManager.DatabaseConfig) {
-            accountManager = new MySQLAccountManager(((MySQLAccountManager.DatabaseConfig) dbConfig));
-        } else {
-            throw new IllegalArgumentException("Unknown database type: " + dbConfig);
-        }
+        accountManager = AccountManager.createManager(dbConfig, this);
         accountManager.connect();
 
         discordCommandExecutor.setAdminRole(configManager.adminRole);
