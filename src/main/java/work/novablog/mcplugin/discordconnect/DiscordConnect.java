@@ -106,7 +106,12 @@ public final class DiscordConnect extends JavaPlugin {
         discordCommandExecutor = new DiscordCommandExecutor();
         discordCommandExecutor.registerCommand(new DiscordStandardCommand());
 
-        init();
+        try {
+            init();
+        } catch (Throwable e) {
+            e.printStackTrace();
+            setEnabled(false);
+        }
     }
 
     /**
@@ -116,31 +121,20 @@ public final class DiscordConnect extends JavaPlugin {
      *     複数回呼び出した場合、新しいconfigデータが読み出されます
      * </p>
      */
-    public void init() {
+    public void init() throws IOException {
         if(botManager != null) botManager.botShutdown(true);
         if(discordWebhookSenders != null) discordWebhookSenders.forEach(DiscordWebhookSender::shutdown);
         if(bukkitListener != null) HandlerList.unregisterAll(bukkitListener);
         if(lunaChatListener != null) HandlerList.unregisterAll(lunaChatListener);
 
-        ConfigManager configManager;
-        try {
-            configManager = new ConfigManager(this);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return;
-        }
-
+        ConfigManager configManager = new ConfigManager(this);
         DatabaseConfig dbConfig = configManager.getAccountsDatabaseConfig();
         if (dbConfig instanceof YamlAccountManager.DatabaseConfig) {
             accountManager = new YamlAccountManager(getDataFolder(), ((YamlAccountManager.DatabaseConfig) dbConfig));
         } else {
             throw new IllegalArgumentException("Unknown database type: " + dbConfig);
         }
-        try {
-            accountManager.connect();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        accountManager.connect();
 
         discordCommandExecutor.setAdminRole(configManager.adminRole);
 
