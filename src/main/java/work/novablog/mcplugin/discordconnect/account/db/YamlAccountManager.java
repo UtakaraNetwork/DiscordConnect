@@ -66,16 +66,14 @@ public class YamlAccountManager extends AccountManager {
 
 
     @Override
-    public CompletableFuture<Void> init() {
-        return runCurrent(this::loadFile);
+    public void connect() {
+        loadFile();
     }
 
     @Override
-    public CompletableFuture<Void> close() {
-        return runCurrent(() -> {
-            saveFile();
-            discordAccounts.clear();
-        });
+    public void close() throws IOException {
+        saveFile();
+        discordAccounts.clear();
     }
 
 

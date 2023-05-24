@@ -3,6 +3,7 @@ package work.novablog.mcplugin.discordconnect.account;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -13,9 +14,9 @@ public abstract class AccountManager {
     private final Map<String, UUID> linkingCodes = new ConcurrentHashMap<>();
 
 
-    public abstract CompletableFuture<Void> init();
+    public abstract void connect() throws IOException;
 
-    public abstract CompletableFuture<Void> close();
+    public abstract void close() throws IOException;
 
 
     public final String generateCode(UUID playerUuid) {

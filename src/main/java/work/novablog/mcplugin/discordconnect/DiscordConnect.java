@@ -136,7 +136,11 @@ public final class DiscordConnect extends JavaPlugin {
         } else {
             throw new IllegalArgumentException("Unknown database type: " + dbConfig);
         }
-        accountManager.init().whenComplete((v, th) -> th.printStackTrace());
+        try {
+            accountManager.connect();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         discordCommandExecutor.setAdminRole(configManager.adminRole);
 
@@ -212,7 +216,12 @@ public final class DiscordConnect extends JavaPlugin {
         if(botManager != null) botManager.botShutdown(false);
         if(discordWebhookSenders != null) discordWebhookSenders.forEach(DiscordWebhookSender::shutdown);
 
-        if (accountManager != null)
-            accountManager.close().whenComplete((v, th) -> th.printStackTrace());
+        if (accountManager != null) {
+            try {
+                accountManager.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }
