@@ -32,12 +32,13 @@ linkedToConsoleCommand: ""
 
 # アカウントに関するデータベース設定
 accounts:
-  dbType: yaml  # 現在は yaml のみ対応
+  dbType: yaml  # 現在は yaml, sqlite のみ対応
   database:
     yaml:
       file: ./accounts.yml
     sqlite:
       file: ./accounts.db
+      properties: {}
     mysql:
       username: root
       password: "password"

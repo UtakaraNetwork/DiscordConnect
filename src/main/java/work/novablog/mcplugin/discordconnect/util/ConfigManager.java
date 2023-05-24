@@ -5,6 +5,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 import work.novablog.mcplugin.discordconnect.account.db.DatabaseConfig;
+import work.novablog.mcplugin.discordconnect.account.db.SQLiteAccountManager;
 import work.novablog.mcplugin.discordconnect.account.db.YamlAccountManager;
 
 import java.io.File;
@@ -96,6 +97,8 @@ public class ConfigManager {
 
         if (dbType.equalsIgnoreCase("yaml")) {
             accountsDatabaseConfig = new YamlAccountManager.DatabaseConfig(dbSection);
+        } else if (dbType.equalsIgnoreCase("sqlite")) {
+            accountsDatabaseConfig = new SQLiteAccountManager.DatabaseConfig(dbSection);
         } else {
             throw new IllegalArgumentException("Unknown database type: " + dbType);
         }

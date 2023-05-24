@@ -9,6 +9,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import work.novablog.mcplugin.discordconnect.account.AccountManager;
 import work.novablog.mcplugin.discordconnect.account.db.DatabaseConfig;
+import work.novablog.mcplugin.discordconnect.account.db.SQLiteAccountManager;
 import work.novablog.mcplugin.discordconnect.account.db.YamlAccountManager;
 import work.novablog.mcplugin.discordconnect.command.BukkitCommand;
 import work.novablog.mcplugin.discordconnect.command.DiscordCommandExecutor;
@@ -131,6 +132,8 @@ public final class DiscordConnect extends JavaPlugin {
         DatabaseConfig dbConfig = configManager.getAccountsDatabaseConfig();
         if (dbConfig instanceof YamlAccountManager.DatabaseConfig) {
             accountManager = new YamlAccountManager(getDataFolder(), ((YamlAccountManager.DatabaseConfig) dbConfig));
+        } else if (dbConfig instanceof SQLiteAccountManager.DatabaseConfig) {
+            accountManager = new SQLiteAccountManager(getDataFolder(), ((SQLiteAccountManager.DatabaseConfig) dbConfig));
         } else {
             throw new IllegalArgumentException("Unknown database type: " + dbConfig);
         }
