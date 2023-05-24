@@ -73,11 +73,7 @@ public class YamlAccountManager extends AccountManager {
     @Override
     public CompletableFuture<Void> close() {
         return runCurrent(() -> {
-            try {
-                saveFile();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            saveFile();
             discordAccounts.clear();
         });
     }
@@ -97,6 +93,7 @@ public class YamlAccountManager extends AccountManager {
     public CompletableFuture<Void> linkDiscordId(@NotNull UUID minecraftId, long discordId) {
         return runCurrent(() -> {
             discordAccounts.put(minecraftId, discordId);
+            saveFile();
         });
     }
 
@@ -117,14 +114,16 @@ public class YamlAccountManager extends AccountManager {
     @Override
     public CompletableFuture<Void> unlinkByMinecraftId(@NotNull UUID minecraftId) {
         return runCurrent(() -> {
-            discordAccounts.remove(minecraftId);
+            if (discordAccounts.remove(minecraftId) != null)
+                saveFile();
         });
     }
 
     @Override
     public CompletableFuture<Void> unlinkByDiscordId(long discordId) {
         return runCurrent(() -> {
-            discordAccounts.values().removeIf(dId -> dId == discordId);
+            if (discordAccounts.values().removeIf(dId -> dId == discordId))
+                saveFile();
         });
     }
 
@@ -152,7 +151,7 @@ public class YamlAccountManager extends AccountManager {
         }
     }
 
-    private CompletableFuture<Void> runCurrent(Runnable runnable) {
+    private CompletableFuture<Void> runCurrent(ThrowRunnable runnable) {
         try {
             runnable.run();
             return CompletableFuture.completedFuture(null);
@@ -161,6 +160,10 @@ public class YamlAccountManager extends AccountManager {
             f.completeExceptionally(e);
             return f;
         }
+    }
+
+    private interface ThrowRunnable {
+        void run() throws Throwable;
     }
 
 
