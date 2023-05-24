@@ -147,6 +147,7 @@ public class ConfigManager {
         botIsReady,
         botRestarted,
         configReloaded,
+        configReloadFailed,
         configPropertyIsNull,
         dispatchedCommand,
         bungeeCommandPlayerOnly,
