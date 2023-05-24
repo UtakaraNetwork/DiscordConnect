@@ -90,9 +90,12 @@ public class ConfigManager {
         linkedToConsoleCommand = pluginConfig.getString("linkedToConsoleCommand");
 
         String dbType = Optional.ofNullable(pluginConfig.getString("accounts.dbType")).orElse("yaml");
-        ConfigurationSection accountsDatabaseConfigSection = pluginConfig.getConfigurationSection("accounts.database." + dbType);
+        ConfigurationSection dbSection = pluginConfig.getConfigurationSection("accounts.database." + dbType);
+        if (dbSection == null)
+            dbSection = new YamlConfiguration();
+
         if (dbType.equalsIgnoreCase("yaml")) {
-            accountsDatabaseConfig = new YamlAccountManager.DatabaseConfig(accountsDatabaseConfigSection);
+            accountsDatabaseConfig = new YamlAccountManager.DatabaseConfig(dbSection);
         } else {
             throw new IllegalArgumentException("Unknown database type: " + dbType);
         }
