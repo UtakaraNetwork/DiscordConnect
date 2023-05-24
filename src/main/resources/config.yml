@@ -32,7 +32,7 @@ linkedToConsoleCommand: ""
 
 # アカウントに関するデータベース設定
 accounts:
-  dbType: yaml  # 現在は yaml, sqlite のみ対応
+  dbType: yaml
   database:
     yaml:
       file: ./accounts.yml
@@ -40,10 +40,11 @@ accounts:
       file: ./accounts.db
       properties: {}
     mysql:
-      username: root
-      password: "password"
       address: localhost:3306
       database: "discordconnect_accounts"
+      properties:
+        user: root
+        password: password
 
 # この値は変更しないでください！ (Don't change the value!)
 configVersion: 4
