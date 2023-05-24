@@ -26,12 +26,11 @@ public class YamlAccountManager extends AccountManager {
     }
 
 
-    public File getFilePath() {
-        return dataFilePath;
+    public DatabaseConfig getConfig() {
+        return config;
     }
 
-    @Override
-    public CompletableFuture<Void> init() {
+    public void loadFile() {
         discordAccounts.clear();
         if (dataFilePath.isFile()) {
             ConfigurationSection ids = YamlConfiguration.loadConfiguration(dataFilePath).getConfigurationSection("ids");
@@ -48,11 +47,9 @@ public class YamlAccountManager extends AccountManager {
                 }
             }
         }
-        return CompletableFuture.completedFuture(null);
     }
 
-    @Override
-    public CompletableFuture<Void> close() {
+    public void saveFile() throws IOException {
         YamlConfiguration config;
         if (dataFilePath.isFile()) {
             config = YamlConfiguration.loadConfiguration(dataFilePath);
@@ -64,14 +61,25 @@ public class YamlAccountManager extends AccountManager {
         discordAccounts.forEach((uuid, accountId) ->
                 config.set("ids." + uuid.toString(), accountId));
 
-        try {
-            config.save(dataFilePath);
-        } catch (IOException e) {
-            CompletableFuture<Void> f = new CompletableFuture<>();
-            f.completeExceptionally(e);
-            return f;
-        }
-        return CompletableFuture.completedFuture(null);
+        config.save(dataFilePath);
+    }
+
+
+    @Override
+    public CompletableFuture<Void> init() {
+        return runCurrent(this::loadFile);
+    }
+
+    @Override
+    public CompletableFuture<Void> close() {
+        return runCurrent(() -> {
+            try {
+                saveFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            discordAccounts.clear();
+        });
     }
 
 
