@@ -99,19 +99,18 @@ public final class DiscordConnect extends JavaPlugin {
             lunaChatAPI = ((LunaChatBukkit) temp).getLunaChatAPI();
         }
 
-        try {
-            init();
-        } catch (Throwable e) {
-            e.printStackTrace();
-            setEnabled(false);
-            return;
-        }
-
         //コマンドの追加
         Optional.ofNullable(getCommand("discordconnect"))
                         .ifPresent(cmd -> cmd.setExecutor(new BukkitCommand()));
         discordCommandExecutor = new DiscordCommandExecutor();
         discordCommandExecutor.registerCommand(new DiscordStandardCommand());
+
+        try {
+            init();
+        } catch (Throwable e) {
+            e.printStackTrace();
+            setEnabled(false);
+        }
     }
 
     /**
