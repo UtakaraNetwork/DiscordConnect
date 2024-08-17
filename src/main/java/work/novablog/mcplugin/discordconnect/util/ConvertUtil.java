@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.UUID;
 
 public class ConvertUtil {
-    private static final String AVATAR_IMG_URL = "https://crafatar.com/avatars/{uuid}?size=512&default=MHF_Steve&overlay";
+    private static final String AVATAR_IMG_URL = "https://mineskin.eu/helm/{uuid}/100.png";
 
     /**
      * MinecraftプレイヤーのUUIDからアバターのURLを取得します
@@ -14,7 +14,7 @@ public class ConvertUtil {
      * </p>
      * @param uuid プレイヤーのUUID
      * @return プレイヤーのアバターURL
-     * @see <a href="https://crafatar.com/">crafatar</a>を利用させていただいています
+     * @see <a href="https://mineskin.eu/">Mineskin</a>を利用させていただいています
      */
     public static String getMinecraftAvatarURL(@NotNull UUID uuid) {
         String uuidText = uuid.toString();
