@@ -12,7 +12,6 @@ import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import work.novablog.mcplugin.discordconnect.DiscordConnect;
@@ -182,16 +181,13 @@ public class DiscordListener extends ListenerAdapter {
             if (uuid == null)
                 continue;
 
-            Player player = Optional.ofNullable(Bukkit.getOfflinePlayer(uuid).getPlayer()).orElse(null);
-            if (player == null)
-                return true;
-
             mgr.linkDiscordId(uuid, userId).whenComplete((v, th) -> {
                 if (th != null) {
                     th.printStackTrace();
                 } else {
                     Bukkit.getScheduler().callSyncMethod(DiscordConnect.getInstance(), () -> {
-                        processLinkedPlayer(player, event.getAuthor(), event.getChannel());
+                        String playerName = Objects.requireNonNull(mgr.getLinkingPlayerName(uuid));
+                        processLinkedPlayer(uuid, playerName, event.getAuthor(), event.getChannel());
                         return null;
                     });
                 }
@@ -201,14 +197,15 @@ public class DiscordListener extends ListenerAdapter {
         return false;
     }
 
-    private void processLinkedPlayer(Player player, User user, MessageChannel channel) {
-        String mcid = player.getName();
+    private void processLinkedPlayer(UUID playerId, String playerName, User user, MessageChannel channel) {
         try {
-            player.sendMessage(ConfigManager.Message.accountLinkLinked.toString()
-                    .replaceAll("\\{user}", user.getAsTag()));
+            Optional.ofNullable(Bukkit.getPlayer(playerId)).ifPresent(p ->
+                    p.sendMessage(ConfigManager.Message.accountLinkLinked.toString()
+                            .replaceAll("\\{user}", user.getAsTag()))
+            );
 
             channel.sendMessage(ConfigManager.Message.accountLinkLinkedToDiscord.toString()
-                    .replaceAll("\\{mcid}", mcid))
+                    .replaceAll("\\{mcid}", playerName))
                     .queue();
 
         } catch (Throwable e) {
@@ -220,9 +217,9 @@ public class DiscordListener extends ListenerAdapter {
 
             try {
                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(), linkedCommand
-                        .replaceAll("\\{playerId}", player.getUniqueId().toString())
+                        .replaceAll("\\{playerId}", playerId.toString())
                         .replaceAll("\\{discordId}", user.getId())
-                        .replaceAll("\\{player}", player.getName())
+                        .replaceAll("\\{player}", playerName)
                         .replaceAll("\\{discord}", user.getAsTag())
                 );
             } catch (Throwable e) {

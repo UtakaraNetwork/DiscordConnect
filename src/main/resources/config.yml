@@ -32,6 +32,8 @@ linkedToConsoleCommand: ""
 
 # アカウントに関するデータベース設定
 accounts:
+  # 参加するためにリンクが必要
+  requireLink: false
   dbType: yaml
   database:
     yaml:

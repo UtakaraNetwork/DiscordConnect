@@ -19,6 +19,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public abstract class AccountManager {
     private final Map<String, UUID> linkingCodes = new ConcurrentHashMap<>();
+    private final Map<UUID, String> names = new ConcurrentHashMap<>();
 
 
     public abstract void connect() throws IOException;
@@ -26,7 +27,8 @@ public abstract class AccountManager {
     public abstract void close() throws IOException;
 
 
-    public final String generateCode(UUID playerUuid) {
+    public final String generateCode(UUID playerUuid, String playerName) {
+        names.put(playerUuid, playerName);
         String codeString;
         do {
             int code = ThreadLocalRandom.current().nextInt(10000);
@@ -34,6 +36,10 @@ public abstract class AccountManager {
 
         } while (linkingCodes.putIfAbsent(codeString, playerUuid) != null);
         return codeString;
+    }
+
+    public @Nullable String getLinkingPlayerName(UUID playerId) {
+        return names.get(playerId);
     }
 
     public final @Nullable UUID removeMinecraftIdByLinkCode(@NotNull String code) {

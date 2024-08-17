@@ -20,6 +20,7 @@ public class ConfigManager {
 
     private static YamlConfiguration langData;
     private final DatabaseConfig accountsDatabaseConfig;
+    private final boolean accountLinkRequired;
 
     public String botToken;
     public List<String> botWebhookURLs;
@@ -93,6 +94,7 @@ public class ConfigManager {
         ConfigurationSection dbSection = pluginConfig.getConfigurationSection("accounts.database." + dbType);
         if (dbSection == null)
             dbSection = new YamlConfiguration();
+        accountLinkRequired = pluginConfig.getBoolean("accounts.requireLink", false);
 
         accountsDatabaseConfig = AccountManager.createDatabaseConfig(dbType, dbSection);
     }
@@ -122,6 +124,10 @@ public class ConfigManager {
 
     public DatabaseConfig getAccountsDatabaseConfig() {
         return accountsDatabaseConfig;
+    }
+
+    public boolean isAccountLinkRequired() {
+        return accountLinkRequired;
     }
 
     private void backupOldFile(Plugin plugin, String targetFileName) throws IOException {
@@ -156,6 +162,8 @@ public class ConfigManager {
         accountLinkLinkedToDiscord,
         accountLinkLinked,
         accountLinkShowCode,
+        accountLinkRequired,
+        accountLinkProcessError,
 
         bungeeCommandDenied,
         bungeeCommandNotFound,

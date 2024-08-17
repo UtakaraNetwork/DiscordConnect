@@ -38,7 +38,7 @@ public class BukkitCommand extends BukkitCommandExecutor {
         }
         Player player = (Player) sender;
         String botName = instance.getBotManager().getBotUser().getName();
-        String code = instance.getAccountManager().generateCode(player.getUniqueId());
+        String code = instance.getAccountManager().generateCode(player.getUniqueId(), player.getName());
 
         sender.sendMessage(ConfigManager.Message.accountLinkShowCode.toString()
                 .replaceAll("\\{bot}", botName)

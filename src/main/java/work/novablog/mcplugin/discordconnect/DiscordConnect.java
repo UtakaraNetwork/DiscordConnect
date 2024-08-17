@@ -162,7 +162,7 @@ public final class DiscordConnect extends JavaPlugin {
         }
 
         //BungeecordイベントのListenerを登録
-        bukkitListener = new BukkitListener(configManager.fromMinecraftToDiscordName);
+        bukkitListener = new BukkitListener(configManager);
         getServer().getPluginManager().registerEvents(bukkitListener, this);
         if(lunaChatAPI != null) {
             lunaChatListener = new LunaChatListener(

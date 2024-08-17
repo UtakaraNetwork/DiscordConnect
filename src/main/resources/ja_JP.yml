@@ -19,6 +19,8 @@ pluginIsLatest: "プラグインは最新バージョンです（{current}）"
 accountLinkLinkedToDiscord: "Minecraftアカウント {mcid} と連携しました！"
 accountLinkLinked: "§6Discordアカウント §f{user}§6 と連携しました！"
 accountLinkShowCode: "§eDiscordボット §f{bot}§e に §6{code}§e を送信してください"
+accountLinkRequired: "§7このサーバーに接続するには、§fDiscord §7とのリンクが必要です\n§eDiscordボット §f{bot} §eに §6{code} §eを送信してください"
+accountLinkProcessError: "§cアカウント処理に失敗しました。管理者にお問い合わせください。"
 
 bungeeCommandDenied: "§cあなたはこのコマンドを実行する権限を持っていません！"
 bungeeCommandNotFound: "§cコマンドが見つかりません！"
