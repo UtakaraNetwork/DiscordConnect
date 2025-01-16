@@ -38,7 +38,7 @@ public class BukkitCommand extends BukkitCommandExecutor {
         }
         Player player = (Player) sender;
         String botName = instance.getBotManager().getBotUser().getName();
-        String code = instance.getAccountManager().generateCode(player.getUniqueId());
+        String code = instance.getAccountManager().generateCode(player.getUniqueId(), player.getName());
 
         sender.sendMessage(ConfigManager.Message.accountLinkShowCode.toString()
                 .replaceAll("\\{bot}", botName)
@@ -46,7 +46,13 @@ public class BukkitCommand extends BukkitCommandExecutor {
     }
 
     public void reloadCmd(CommandSender sender, String[] args) {
-        DiscordConnect.getInstance().init();
+        try {
+            DiscordConnect.getInstance().init();
+        } catch (Throwable e) {
+            e.printStackTrace();
+            sender.sendMessage(ConfigManager.Message.configReloadFailed.toString());
+            return;
+        }
         sender.sendMessage(ConfigManager.Message.configReloaded.toString());
     }
 

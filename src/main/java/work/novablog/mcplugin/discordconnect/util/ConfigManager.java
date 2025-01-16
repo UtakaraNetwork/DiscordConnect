@@ -1,8 +1,11 @@
 package work.novablog.mcplugin.discordconnect.util;
 
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
+import work.novablog.mcplugin.discordconnect.account.AccountManager;
+import work.novablog.mcplugin.discordconnect.account.db.DatabaseConfig;
 
 import java.io.File;
 import java.io.IOException;
@@ -10,11 +13,14 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 public class ConfigManager {
     private static final int CONFIG_LATEST = 3;
 
     private static YamlConfiguration langData;
+    private final DatabaseConfig accountsDatabaseConfig;
+    private final boolean accountLinkRequired;
 
     public String botToken;
     public List<String> botWebhookURLs;
@@ -83,6 +89,14 @@ public class ConfigManager {
         lunaChatJapanizeFormat = pluginConfig.getString("japanizeFormat");
 
         linkedToConsoleCommand = pluginConfig.getString("linkedToConsoleCommand");
+
+        String dbType = Optional.ofNullable(pluginConfig.getString("accounts.dbType")).orElse("yaml");
+        ConfigurationSection dbSection = pluginConfig.getConfigurationSection("accounts.database." + dbType);
+        if (dbSection == null)
+            dbSection = new YamlConfiguration();
+        accountLinkRequired = pluginConfig.getBoolean("accounts.requireLink", false);
+
+        accountsDatabaseConfig = AccountManager.createDatabaseConfig(dbType, dbSection);
     }
 
     private YamlConfiguration getConfigData(Plugin plugin) throws IOException {
@@ -108,6 +122,14 @@ public class ConfigManager {
         return YamlConfiguration.loadConfiguration(langFile);
     }
 
+    public DatabaseConfig getAccountsDatabaseConfig() {
+        return accountsDatabaseConfig;
+    }
+
+    public boolean isAccountLinkRequired() {
+        return accountLinkRequired;
+    }
+
     private void backupOldFile(Plugin plugin, String targetFileName) throws IOException {
         File oldFile = new File(plugin.getDataFolder(), targetFileName + "_old");
         Files.deleteIfExists(oldFile.toPath());
@@ -127,6 +149,7 @@ public class ConfigManager {
         botIsReady,
         botRestarted,
         configReloaded,
+        configReloadFailed,
         configPropertyIsNull,
         dispatchedCommand,
         bungeeCommandPlayerOnly,
@@ -139,6 +162,8 @@ public class ConfigManager {
         accountLinkLinkedToDiscord,
         accountLinkLinked,
         accountLinkShowCode,
+        accountLinkRequired,
+        accountLinkProcessError,
 
         bungeeCommandDenied,
         bungeeCommandNotFound,

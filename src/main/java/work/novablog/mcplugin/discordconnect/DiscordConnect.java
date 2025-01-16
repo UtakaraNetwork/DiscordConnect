@@ -7,12 +7,13 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
+import work.novablog.mcplugin.discordconnect.account.AccountManager;
+import work.novablog.mcplugin.discordconnect.account.db.DatabaseConfig;
 import work.novablog.mcplugin.discordconnect.command.BukkitCommand;
 import work.novablog.mcplugin.discordconnect.command.DiscordCommandExecutor;
 import work.novablog.mcplugin.discordconnect.command.DiscordStandardCommand;
 import work.novablog.mcplugin.discordconnect.listener.BukkitListener;
 import work.novablog.mcplugin.discordconnect.listener.LunaChatListener;
-import work.novablog.mcplugin.discordconnect.util.AccountManager;
 import work.novablog.mcplugin.discordconnect.util.ConfigManager;
 import work.novablog.mcplugin.discordconnect.util.GithubAPI;
 import work.novablog.mcplugin.discordconnect.util.discord.BotManager;
@@ -20,7 +21,6 @@ import work.novablog.mcplugin.discordconnect.util.discord.DiscordWebhookSender;
 
 import javax.annotation.Nullable;
 import javax.security.auth.login.LoginException;
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Optional;
@@ -38,7 +38,7 @@ public final class DiscordConnect extends JavaPlugin {
     private UUIDCacheData uuidCacheData;
     private LunaChatListener lunaChatListener;
 
-    private final AccountManager accountManager = new AccountManager(new File(getDataFolder(), "accounts.yml"));
+    private @Nullable AccountManager accountManager;
 
     /**
      * インスタンスを返します
@@ -56,7 +56,7 @@ public final class DiscordConnect extends JavaPlugin {
         return botManager;
     }
 
-    public AccountManager getAccountManager() {
+    public @Nullable AccountManager getAccountManager() {
         return accountManager;
     }
 
@@ -105,7 +105,12 @@ public final class DiscordConnect extends JavaPlugin {
         discordCommandExecutor = new DiscordCommandExecutor();
         discordCommandExecutor.registerCommand(new DiscordStandardCommand());
 
-        init();
+        try {
+            init();
+        } catch (Throwable e) {
+            e.printStackTrace();
+            setEnabled(false);
+        }
     }
 
     /**
@@ -115,20 +120,17 @@ public final class DiscordConnect extends JavaPlugin {
      *     複数回呼び出した場合、新しいconfigデータが読み出されます
      * </p>
      */
-    public void init() {
+    public void init() throws IOException {
         if(botManager != null) botManager.botShutdown(true);
         if(discordWebhookSenders != null) discordWebhookSenders.forEach(DiscordWebhookSender::shutdown);
         if(bukkitListener != null) HandlerList.unregisterAll(bukkitListener);
         if(lunaChatListener != null) HandlerList.unregisterAll(lunaChatListener);
 
-        ConfigManager configManager;
-        try {
-            configManager = new ConfigManager(this);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return;
-        }
-        accountManager.loadFile();
+        ConfigManager configManager = new ConfigManager(this);
+
+        DatabaseConfig dbConfig = configManager.getAccountsDatabaseConfig();
+        accountManager = AccountManager.createManager(dbConfig, this);
+        accountManager.connect();
 
         discordCommandExecutor.setAdminRole(configManager.adminRole);
 
@@ -160,7 +162,7 @@ public final class DiscordConnect extends JavaPlugin {
         }
 
         //BungeecordイベントのListenerを登録
-        bukkitListener = new BukkitListener(configManager.fromMinecraftToDiscordName);
+        bukkitListener = new BukkitListener(configManager);
         getServer().getPluginManager().registerEvents(bukkitListener, this);
         if(lunaChatAPI != null) {
             lunaChatListener = new LunaChatListener(
@@ -203,5 +205,13 @@ public final class DiscordConnect extends JavaPlugin {
     public void onDisable() {
         if(botManager != null) botManager.botShutdown(false);
         if(discordWebhookSenders != null) discordWebhookSenders.forEach(DiscordWebhookSender::shutdown);
+
+        if (accountManager != null) {
+            try {
+                accountManager.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

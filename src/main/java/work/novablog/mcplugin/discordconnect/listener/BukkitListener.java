@@ -8,10 +8,12 @@ import com.gmail.necnionch.myapp.markdownconverter.MarkdownConverter;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.jetbrains.annotations.NotNull;
 import work.novablog.mcplugin.discordconnect.DiscordConnect;
+import work.novablog.mcplugin.discordconnect.account.AccountManager;
 import work.novablog.mcplugin.discordconnect.util.ConfigManager;
 import work.novablog.mcplugin.discordconnect.util.ConvertUtil;
 import work.novablog.mcplugin.discordconnect.util.discord.BotManager;
@@ -19,16 +21,21 @@ import work.novablog.mcplugin.discordconnect.util.discord.DiscordWebhookSender;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 
 public class BukkitListener implements Listener {
+    private final ConfigManager config;
     private final String fromMinecraftToDiscordName;
 
     /**
      * bungeecordのイベントを受け取るインスタンスを生成します
-     * @param fromMinecraftToDiscordName マイクラからDiscordへ転送するときの名前欄のフォーマット
+     * @param config プラグイン設定
      */
-    public BukkitListener(@NotNull String fromMinecraftToDiscordName) {
-        this.fromMinecraftToDiscordName = fromMinecraftToDiscordName;
+    public BukkitListener(@NotNull ConfigManager config) {
+        this.config = config;
+        this.fromMinecraftToDiscordName = config.fromMinecraftToDiscordName;
     }
 
     /**
@@ -57,6 +64,45 @@ public class BukkitListener implements Listener {
                     avatarURL,
                     convertedMessage
             ));
+        }
+    }
+
+    @EventHandler
+    public void onPreLogin(AsyncPlayerPreLoginEvent event) {
+        if (!config.isAccountLinkRequired() || !AsyncPlayerPreLoginEvent.Result.ALLOWED.equals(event.getLoginResult()))
+            return;
+
+        DiscordConnect plugin = DiscordConnect.getInstance();
+        UUID playerId = event.getUniqueId();
+        String playerName = event.getName();
+        AccountManager accountManager = plugin.getAccountManager();
+
+        try {
+            Objects.requireNonNull(accountManager, "Account Manager not loaded");
+            Boolean linked = accountManager.isLinkedDiscord(playerId).get();
+
+            if (Boolean.TRUE.equals(linked)) {
+                return;  // linked
+            }
+
+            // create code
+            BotManager botManager = Objects.requireNonNull(plugin.getBotManager(), "Bot Manager not loaded");
+            String botName = botManager.getBotUser().getName();
+
+            String code = accountManager.linkingCodes().entrySet().stream()
+                    .filter(e -> playerId.equals(e.getValue()))
+                    .map(Map.Entry::getKey)
+                    .findAny()
+                    .orElseGet(() -> accountManager.generateCode(playerId, playerName));
+
+            event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, ConfigManager.Message.accountLinkRequired.toString()
+                    .replaceAll("\\{bot}", botName)
+                    .replaceAll("\\{code}", code));
+
+
+        } catch (Throwable e) {
+            e.printStackTrace();
+            event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, ConfigManager.Message.accountLinkProcessError.toString());
         }
     }
 

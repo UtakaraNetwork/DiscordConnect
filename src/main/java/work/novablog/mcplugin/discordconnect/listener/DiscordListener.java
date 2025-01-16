@@ -3,6 +3,7 @@ package work.novablog.mcplugin.discordconnect.listener;
 import com.gmail.necnionch.myapp.markdownconverter.MarkComponent;
 import com.gmail.necnionch.myapp.markdownconverter.MarkdownConverter;
 import net.dv8tion.jda.api.entities.ChannelType;
+import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -11,12 +12,11 @@ import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import work.novablog.mcplugin.discordconnect.DiscordConnect;
+import work.novablog.mcplugin.discordconnect.account.AccountManager;
 import work.novablog.mcplugin.discordconnect.command.DiscordCommandExecutor;
-import work.novablog.mcplugin.discordconnect.util.AccountManager;
 import work.novablog.mcplugin.discordconnect.util.ConfigManager;
 import work.novablog.mcplugin.discordconnect.util.discord.BotManager;
 
@@ -171,6 +171,8 @@ public class DiscordListener extends ListenerAdapter {
     private boolean processLinkCodeMessage(MessageReceivedEvent event, long userId) {
         String content = event.getMessage().getContentStripped();
         AccountManager mgr = DiscordConnect.getInstance().getAccountManager();
+        if (mgr == null)
+            return false;
 
         Matcher matcher = Pattern.compile("(\\d+)").matcher(content);
         while (matcher.find()) {
@@ -179,46 +181,51 @@ public class DiscordListener extends ListenerAdapter {
             if (uuid == null)
                 continue;
 
-            Player player = Optional.ofNullable(Bukkit.getOfflinePlayer(uuid).getPlayer()).orElse(null);
-            if (player == null)
-                return true;
-
-            mgr.setLinkedDiscordId(uuid, userId);
-            mgr.saveFile();
-
-            String mcid = player.getName();
-
-            User author = event.getAuthor();
-            try {
-                player.sendMessage(ConfigManager.Message.accountLinkLinked.toString()
-                        .replaceAll("\\{user}", author.getAsTag()));
-
-                event.getChannel().sendMessage(ConfigManager.Message.accountLinkLinkedToDiscord.toString()
-                                .replaceAll("\\{mcid}", mcid))
-                        .queue();
-
-            } catch (Throwable e) {
-                e.printStackTrace();
-            }
-
-            String linkedCommand = linkedToConsoleCommand;
-            if (linkedCommand != null && !linkedCommand.isEmpty()) {
-                Bukkit.getScheduler().callSyncMethod(DiscordConnect.getInstance(), () -> {
-                    try {
-                        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), linkedCommand
-                                .replaceAll("\\{playerId}", player.getUniqueId().toString())
-                                .replaceAll("\\{discordId}", author.getId())
-                                .replaceAll("\\{player}", player.getName())
-                                .replaceAll("\\{discord}", author.getAsTag())
-                        );
-                    } catch (Throwable e) {
-                        e.printStackTrace();
-                    }
-                    return null;
-                });
-            }
+            mgr.linkDiscordId(uuid, userId).whenComplete((v, th) -> {
+                if (th != null) {
+                    th.printStackTrace();
+                } else {
+                    Bukkit.getScheduler().callSyncMethod(DiscordConnect.getInstance(), () -> {
+                        String playerName = Objects.requireNonNull(mgr.getLinkingPlayerName(uuid));
+                        processLinkedPlayer(uuid, playerName, event.getAuthor(), event.getChannel());
+                        return null;
+                    });
+                }
+            });
             return true;
         }
         return false;
     }
+
+    private void processLinkedPlayer(UUID playerId, String playerName, User user, MessageChannel channel) {
+        try {
+            Optional.ofNullable(Bukkit.getPlayer(playerId)).ifPresent(p ->
+                    p.sendMessage(ConfigManager.Message.accountLinkLinked.toString()
+                            .replaceAll("\\{user}", user.getAsTag()))
+            );
+
+            channel.sendMessage(ConfigManager.Message.accountLinkLinkedToDiscord.toString()
+                    .replaceAll("\\{mcid}", playerName))
+                    .queue();
+
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+
+        String linkedCommand = linkedToConsoleCommand;
+        if (linkedCommand != null && !linkedCommand.isEmpty()) {
+
+            try {
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), linkedCommand
+                        .replaceAll("\\{playerId}", playerId.toString())
+                        .replaceAll("\\{discordId}", user.getId())
+                        .replaceAll("\\{player}", playerName)
+                        .replaceAll("\\{discord}", user.getAsTag())
+                );
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
 }
